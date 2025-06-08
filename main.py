@@ -503,12 +503,13 @@ if st.session_state.data is not None:
             filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 3])
             
             with filter_col1:
-                platform = st.selectbox("Platform", ["All"] + list(df['Platform'].unique()), key='platform_filter')
-                media_type = st.selectbox("Media Type", ["All"] + list(df['Media Type'].unique()), key='media_type_filter')
+                # --- UX UPDATE: Menggunakan multiselect untuk filter ---
+                platform = st.multiselect("Platform", options=df['Platform'].unique(), key='platform_filter')
+                media_type = st.multiselect("Media Type", options=df['Media Type'].unique(), key='media_type_filter')
             
             with filter_col2:
-                sentiment = st.selectbox("Sentiment", ["All"] + list(df['Sentiment'].unique()), key='sentiment_filter')
-                location = st.selectbox("Location", ["All"] + list(df['Location'].unique()), key='location_filter')
+                sentiment = st.multiselect("Sentiment", options=df['Sentiment'].unique(), key='sentiment_filter')
+                location = st.multiselect("Location", options=df['Location'].unique(), key='location_filter')
 
             with filter_col3:
                 # Menggunakan satu date_input untuk rentang tanggal
@@ -522,7 +523,8 @@ if st.session_state.data is not None:
                 start_date, end_date = date_range if len(date_range) == 2 else (min_date, max_date)
 
             # Logika reset insight jika filter berubah
-            filter_state = f"{platform}{sentiment}{media_type}{location}{start_date}{end_date}"
+            # --- UX UPDATE: Menyesuaikan filter_state untuk list ---
+            filter_state = f"{''.join(platform)}{''.join(sentiment)}{''.join(media_type)}{''.join(location)}{start_date}{end_date}"
             if 'last_filter_state' not in st.session_state or st.session_state.last_filter_state != filter_state:
                 st.session_state.chart_insights = {}
                 st.session_state.campaign_summary = ""
@@ -533,18 +535,19 @@ if st.session_state.data is not None:
 
 
         # Filter DataFrame
+        # --- UX UPDATE: Menyesuaikan logika filter untuk multiselect ---
         filtered_df = df[
             (df['Date'].dt.date >= start_date) &
             (df['Date'].dt.date <= end_date)
         ]
-        if platform != "All":
-            filtered_df = filtered_df[filtered_df['Platform'] == platform]
-        if sentiment != "All":
-            filtered_df = filtered_df[filtered_df['Sentiment'] == sentiment]
-        if media_type != "All":
-            filtered_df = filtered_df[filtered_df['Media Type'] == media_type]
-        if location != "All":
-            filtered_df = filtered_df[filtered_df['Location'] == location]
+        if platform: # Jika list tidak kosong
+            filtered_df = filtered_df[filtered_df['Platform'].isin(platform)]
+        if sentiment: # Jika list tidak kosong
+            filtered_df = filtered_df[filtered_df['Sentiment'].isin(sentiment)]
+        if media_type: # Jika list tidak kosong
+            filtered_df = filtered_df[filtered_df['Media Type'].isin(media_type)]
+        if location: # Jika list tidak kosong
+            filtered_df = filtered_df[filtered_df['Location'].isin(location)]
 
         # --- Deteksi Anomali ---
         engagement_trend = filtered_df.groupby(filtered_df['Date'].dt.date)['Engagements'].sum().reset_index()
