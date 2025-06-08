@@ -127,23 +127,28 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
     """
     return html_content.encode('utf-8')
 
+# PERUBAHAN FONT HANYA DI DALAM FUNGSI INI
 def load_css():
     """Menyuntikkan CSS kustom dengan gradien hijau."""
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
             body { background-color: #042f2e !important; }
             .stApp { 
                 background-image: radial-gradient(at top left, #104e4a, #042f2e, black); 
                 color: #e5e7eb; 
             }
-            .main-header { font-family: 'Orbitron', sans-serif; text-align: center; margin-bottom: 2rem; }
+            .main-header { 
+                font-family: 'Plus Jakarta Sans', sans-serif; /* FONT BARU */
+                text-align: center; 
+                margin-bottom: 2rem; 
+            }
             .main-header h1 { 
                 background: -webkit-linear-gradient(45deg, #6EE7B7, #10B981); 
                 -webkit-background-clip: text; 
                 -webkit-text-fill-color: transparent; 
                 font-size: 2.75rem; 
-                font-weight: 900; 
+                font-weight: 800; /* Disesuaikan dengan ketebalan font baru */
             }
             .main-header p { color: #9ca3af; font-size: 1.1rem; }
             .chart-container, .insight-hub, .anomaly-card, .uploaded-file-info { 
@@ -205,26 +210,21 @@ def parse_csv(uploaded_file):
         st.error(f"Gagal memproses file CSV: {e}")
         return None
 
-# PERUBAHAN BARU: Fungsi untuk menjalankan chatbot di dalam dialog
 @st.dialog("AI Media Consultant")
 def run_consultant_chat(df_summary):
     """Menjalankan antarmuka chat di dalam st.dialog."""
     st.markdown("Tanyakan apa pun tentang data media Anda atau strategi umum.")
 
-    # Inisialisasi riwayat chat khusus untuk dialog ini
     if "consultant_messages" not in st.session_state:
         st.session_state.consultant_messages = [{"role": "assistant", "content": "Halo! Saya adalah konsultan media AI Anda. Apa yang bisa saya bantu analisis hari ini?"}]
 
-    # Tampilkan riwayat chat
     for msg in st.session_state.consultant_messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    # Dapatkan input dari pengguna
     if prompt := st.chat_input("Ketik pertanyaan Anda..."):
         st.session_state.consultant_messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
 
-        # Buat prompt untuk AI dengan konteks
         full_prompt = f"""
         Anda adalah seorang konsultan media AI yang ahli, ramah, dan profesional. 
         Tugas Anda adalah menjawab pertanyaan pengguna terkait analisis media, strategi kampanye, atau interpretasi data.
@@ -275,7 +275,6 @@ if st.session_state.data is not None:
     df = st.session_state.data
     st.markdown(f"""<div class="uploaded-file-info"><h3>☁️ File Berhasil Terunggah! ✅️</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
     
-    # PERUBAHAN BARU: Menambahkan tombol chatbot di samping tombol reset
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Hapus File & Reset", key="clear_file_btn", use_container_width=True):
@@ -283,7 +282,6 @@ if st.session_state.data is not None:
             st.rerun()
     with col2:
         if st.button("💬 Buka AI Consultant", key="open_chat_btn", use_container_width=True, type="secondary"):
-            # Ringkasan data untuk diberikan sebagai konteks ke chatbot
             df_summary_for_chat = df.describe(include='all').to_string()
             run_consultant_chat(df_summary_for_chat)
 
@@ -376,7 +374,7 @@ if st.session_state.data is not None:
                                     st.session_state.chart_insights[chart['key']] = {}
                                 
                                 st.session_state.chart_insights[chart['key']][selected_style] = get_ai_insight(prompt)
-                            st.rerun()
+                                st.rerun()
                     
                     chart_specific_insights = st.session_state.chart_insights.get(chart.get("key"), {})
                     insight_text = chart_specific_insights.get(selected_style, "Pilih model AI untuk menampilkan insight untukmu!.")
