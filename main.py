@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -35,7 +34,7 @@ def configure_gemini_api():
         st.error(f"Gagal mengkonfigurasi Gemini API: {e}. Pastikan API Key valid.")
         return False
 
-def get_ai_insight(prompt, model_name='gemini-1.5-flash'):
+def get_ai_insight(prompt, model_name='gemini-2.0-flash'): # PERUBAHAN 1: Model default diubah
     """
     Memanggil API GenAI untuk menghasilkan wawasan berdasarkan prompt dan model.
     """
@@ -74,12 +73,13 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
             chart_key = chart_info["key"]
             chart_title = chart_info["title"]
             fig = chart_figures_dict.get(chart_key)
-            insights = chart_insights.get(chart_key, {})
             
+            # PERUBAHAN 2: Logika disederhanakan untuk menangani satu wawasan per grafik
+            insight_text = chart_insights.get(chart_key, "") 
             insights_html = ""
-            for model, insight_text in insights.items():
-                insights_html += f"""
-                <h4>Wawasan AI ({model}):</h4>
+            if insight_text:
+                insights_html = f"""
+                <h4>Wawasan AI (Gemini 2.0 Flash):</h4>
                 <div class="insight-box">{insight_text}</div>
                 """
 
@@ -98,7 +98,7 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
                     """
                 except Exception as e:
                     chart_figures_html_sections += f"<p>Gagal menyertakan grafik {chart_title} (Error: {e}).</p>"
-            elif insights:
+            elif insight_text: # Jika ada wawasan tapi tidak ada grafik
                 chart_figures_html_sections += f"""
                 <div class="insight-sub-section">
                     <h3>{chart_title}</h3>
@@ -241,13 +241,11 @@ if st.session_state.data is not None:
         charts_to_display = [{"key": "sentiment", "title": "Analisis Sentimen"}, {"key": "trend", "title": "Tren Keterlibatan"}, {"key": "platform", "title": "Keterlibatan per Platform"}, {"key": "mediaType", "title": "Distribusi Jenis Media"}, {"key": "location", "title": "5 Lokasi Teratas"}]
         chart_cols = st.columns(2)
         
-        def get_chart_prompt(key, data_json, model_name):
+        # PERUBAHAN 3: Fungsi prompt disederhanakan untuk satu model
+        def get_chart_prompt(key, data_json):
             prompts = {"sentiment": "distribusi sentimen", "trend": "tren keterlibatan", "platform": "keterlibatan per platform", "mediaType": "distribusi jenis media", "location": "keterlibatan per lokasi"}
-            personas = {
-                "gemini-1.5-flash": "Anda konsultan media. Berikan 3 wawasan taktis dari data ini.",
-                "llama-3.3-8b-instruct": "Anda brand strategist. Fokus pada peluang & risiko tersembunyi. Berikan 3 wawasan alternatif.",
-                "gemini-1.5-pro-latest": "Anda analis pasar futuristik. Analisis implikasi jangka panjang (6-12 bulan) & potensi disrupsi."}
-            return f"{personas.get(model_name)} Data {prompts.get(key)}: {data_json}. Format sebagai daftar bernomor."
+            persona = "Anda adalah Gemini 2.0 Flash, seorang analis media AI. Berikan 3 wawasan kunci yang tajam dan actionable dari data ini."
+            return f"{persona} Analisis data mengenai {prompts.get(key, 'data')}: {data_json}. Sajikan wawasan dalam format daftar bernomor yang jelas."
 
         for i, chart in enumerate(charts_to_display):
             with chart_cols[i % 2]:
@@ -270,14 +268,17 @@ if st.session_state.data is not None:
                         st.plotly_chart(fig, use_container_width=True)
                     else: st.warning("Tidak ada data untuk ditampilkan dengan filter ini.")
                     
-                    selected_model = st.selectbox("Pilih Model AI", ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"], key=f"sel_{chart['key']}")
+                    # PERUBAHAN 4: Menghapus pilihan model dan menyederhanakan logika tombol dan tampilan wawasan
                     if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
-                            with st.spinner(f"Menganalisis {chart['title']} dengan 3 model AI..."):
-                                st.session_state.chart_insights[chart['key']] = {model: get_ai_insight(get_chart_prompt(chart['key'], data_for_prompt, model), model) for model in ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"]}
+                            with st.spinner(f"Menganalisis {chart['title']} dengan Gemini 2.0 Flash..."):
+                                prompt = get_chart_prompt(chart['key'], data_for_prompt)
+                                # Wawasan disimpan langsung ke kunci chart
+                                st.session_state.chart_insights[chart['key']] = get_ai_insight(prompt)
                             st.rerun()
                     
-                    insight_text = st.session_state.chart_insights.get(chart.get("key"), {}).get(selected_model, "Klik untuk menghasilkan wawasan.")
+                    # Teks wawasan diambil langsung dari state
+                    insight_text = st.session_state.chart_insights.get(chart.get("key"), "Klik untuk menghasilkan wawasan.")
                     st.markdown(f'<div class="insight-box">{insight_text}</div>', unsafe_allow_html=True)
 
         # Wawasan Umum & Unduh
