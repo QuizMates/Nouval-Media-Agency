@@ -412,7 +412,7 @@ st.markdown("""
 if 'data' not in st.session_state:
     st.session_state.data = None
 if 'chart_insights' not in st.session_state:
-    st.session_state.chart_insights = {} # Sekarang akan menyimpan dict {"key": {"Versi 1": ..., "Versi 2": ...}}
+    st.session_state.chart_insights = {} 
 if 'campaign_summary' not in st.session_state:
     st.session_state.campaign_summary = ""
 if 'post_idea' not in st.session_state:
@@ -421,13 +421,22 @@ if 'anomaly_insight' not in st.session_state:
     st.session_state.anomaly_insight = ""
 if 'chart_figures' not in st.session_state:
     st.session_state.chart_figures = {}
-if 'last_uploaded_file_name' not in st.session_state: # Tambahkan inisialisasi untuk nama file
+if 'last_uploaded_file_name' not in st.session_state:
     st.session_state.last_uploaded_file_name = None
-if 'last_uploaded_file_size' not in st.session_state: # Tambahkan inisialisasi untuk ukuran file
+if 'last_uploaded_file_size' not in st.session_state:
     st.session_state.last_uploaded_file_size = None
-# --- NEW: Session state untuk mengontrol visibilitas analisis ---
 if 'show_analysis' not in st.session_state:
     st.session_state.show_analysis = False
+
+# --- UX UPDATE: Inisialisasi state untuk filter multiselect ---
+if 'platform_selection' not in st.session_state:
+    st.session_state.platform_selection = []
+if 'media_type_selection' not in st.session_state:
+    st.session_state.media_type_selection = []
+if 'sentiment_selection' not in st.session_state:
+    st.session_state.sentiment_selection = []
+if 'location_selection' not in st.session_state:
+    st.session_state.location_selection = []
 
 
 # Tampilan unggah file (hanya muncul jika data belum diunggah)
@@ -440,19 +449,13 @@ if st.session_state.data is None:
             st.write("Pastikan file memiliki kolom 'Date', 'Engagements', 'Sentiment', 'Platform', 'Media_Type', 'Location', dan (opsional) 'Headline'.")
             uploaded_file = st.file_uploader("Pilih file CSV", type="csv", key="main_file_uploader")
             if uploaded_file is not None:
-                # Periksa apakah file yang diunggah sama dengan yang terakhir kali diproses
-                # Ini penting untuk menghindari pemrosesan ulang saat widget file_uploader mempertahankan nilainya
                 if uploaded_file.name != st.session_state.last_uploaded_file_name or uploaded_file.size != st.session_state.last_uploaded_file_size:
                     st.session_state.data = parse_csv(uploaded_file)
                     if st.session_state.data is not None:
-                        # Simpan detail file
                         st.session_state.last_uploaded_file_name = uploaded_file.name
                         st.session_state.last_uploaded_file_size = uploaded_file.size
-                        # --- NEW: Reset status show_analysis saat file baru diunggah ---
                         st.session_state.show_analysis = False
-                        st.rerun() # PERBAIKAN: Memaksa rerun untuk menyembunyikan bagian unggah dan menampilkan dashboard
-                # else:
-                #     st.info("File ini sudah diunggah dan dianalisis.") # Opsional: pesan jika file yang sama diunggah ulang
+                        st.rerun() 
             st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -460,7 +463,6 @@ if st.session_state.data is None:
 if st.session_state.data is not None:
     df = st.session_state.data
 
-    # Menampilkan informasi file yang terunggah dan tombol hapus
     st.markdown(f"""
         <div class="uploaded-file-info">
             <h3>☁️ File Terunggah</h3>
@@ -470,49 +472,43 @@ if st.session_state.data is not None:
     """, unsafe_allow_html=True)
     
     if st.button("Hapus File Terunggah", key="clear_file_btn"):
-        st.session_state.data = None # Hapus data
-        st.session_state.chart_insights = {} # Bersihkan wawasan
-        st.session_state.campaign_summary = ""
-        st.session_state.post_idea = ""
-        st.session_state.anomaly_insight = ""
-        st.session_state.chart_figures = {}
-        st.session_state.last_filter_state = "" # Reset filter state
-        st.session_state.last_uploaded_file_name = None # Hapus info file
-        st.session_state.last_uploaded_file_size = None # Hapus info file
-        # --- NEW: Reset status show_analysis saat file dihapus ---
-        st.session_state.show_analysis = False
-        st.rerun() # Rerun aplikasi untuk menampilkan kembali bagian upload
-    st.markdown('</div>', unsafe_allow_html=True) # Tutup div uploaded-file-info
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-
-    # --- NEW: Tombol untuk menampilkan/menyembunyikan analisis ---
-    # Tampilkan tombol hanya jika analisis belum ditampilkan
     if not st.session_state.show_analysis:
         if st.button("lihat hasil analisis datamu!", key="show_analysis_btn", use_container_width=True, type="primary"):
             st.session_state.show_analysis = True
             st.rerun()
 
-    # --- NEW: Seluruh blok analisis sekarang ada di dalam kondisi ini ---
     if st.session_state.show_analysis:
         
-        # --- UX UPDATE: Filter dipindahkan ke dalam expander di main area ---
         with st.expander("⚙️ Filter Data & Opsi Tampilan", expanded=True):
             min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
 
-            # Menggunakan kolom untuk tata letak yang lebih rapi
             filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 3])
             
             with filter_col1:
-                # --- UX UPDATE: Menggunakan multiselect untuk filter ---
-                platform = st.multiselect("Platform", options=df['Platform'].unique(), key='platform_filter')
-                media_type = st.multiselect("Media Type", options=df['Media Type'].unique(), key='media_type_filter')
+                # --- UX UPDATE: Filter dengan tombol "Pilih Semua" ---
+                if st.button("Pilih Semua Platform", key="all_platform_btn", use_container_width=True):
+                    st.session_state.platform_selection = list(df['Platform'].unique())
+                platform = st.multiselect("Platform", options=df['Platform'].unique(), key='platform_selection')
+
+                if st.button("Pilih Semua Media Type", key="all_media_type_btn", use_container_width=True):
+                    st.session_state.media_type_selection = list(df['Media Type'].unique())
+                media_type = st.multiselect("Media Type", options=df['Media Type'].unique(), key='media_type_selection')
             
             with filter_col2:
-                sentiment = st.multiselect("Sentiment", options=df['Sentiment'].unique(), key='sentiment_filter')
-                location = st.multiselect("Location", options=df['Location'].unique(), key='location_filter')
+                if st.button("Pilih Semua Sentiment", key="all_sentiment_btn", use_container_width=True):
+                    st.session_state.sentiment_selection = list(df['Sentiment'].unique())
+                sentiment = st.multiselect("Sentiment", options=df['Sentiment'].unique(), key='sentiment_selection')
+                
+                if st.button("Pilih Semua Lokasi", key="all_location_btn", use_container_width=True):
+                    st.session_state.location_selection = list(df['Location'].unique())
+                location = st.multiselect("Location", options=df['Location'].unique(), key='location_selection')
 
             with filter_col3:
-                # Menggunakan satu date_input untuk rentang tanggal
                 date_range = st.date_input(
                     "Pilih Rentang Tanggal",
                     value=(min_date, max_date),
@@ -522,34 +518,29 @@ if st.session_state.data is not None:
                 )
                 start_date, end_date = date_range if len(date_range) == 2 else (min_date, max_date)
 
-            # Logika reset insight jika filter berubah
-            # --- UX UPDATE: Menyesuaikan filter_state untuk list ---
             filter_state = f"{''.join(sorted(platform))}{''.join(sorted(sentiment))}{''.join(sorted(media_type))}{''.join(sorted(location))}{start_date}{end_date}"
             if 'last_filter_state' not in st.session_state or st.session_state.last_filter_state != filter_state:
                 st.session_state.chart_insights = {}
                 st.session_state.campaign_summary = ""
                 st.session_state.post_idea = ""
                 st.session_state.anomaly_insight = ""
-                st.session_state.chart_figures = {} # Reset chart figures juga
+                st.session_state.chart_figures = {}
                 st.session_state.last_filter_state = filter_state
 
 
-        # Filter DataFrame
-        # --- UX UPDATE: Menyesuaikan logika filter untuk multiselect ---
         filtered_df = df[
             (df['Date'].dt.date >= start_date) &
             (df['Date'].dt.date <= end_date)
         ]
-        if platform: # Jika list tidak kosong
+        if platform:
             filtered_df = filtered_df[filtered_df['Platform'].isin(platform)]
-        if sentiment: # Jika list tidak kosong
+        if sentiment:
             filtered_df = filtered_df[filtered_df['Sentiment'].isin(sentiment)]
-        if media_type: # Jika list tidak kosong
+        if media_type:
             filtered_df = filtered_df[filtered_df['Media Type'].isin(media_type)]
-        if location: # Jika list tidak kosong
+        if location:
             filtered_df = filtered_df[filtered_df['Location'].isin(location)]
 
-        # --- Deteksi Anomali ---
         engagement_trend = filtered_df.groupby(filtered_df['Date'].dt.date)['Engagements'].sum().reset_index()
         if len(engagement_trend) > 7:
             mean = engagement_trend['Engagements'].mean()
@@ -585,10 +576,8 @@ if st.session_state.data is not None:
                 st.markdown('</div>', unsafe_allow_html=True)
 
 
-        # --- Tampilan Grafik ---
         chart_cols = st.columns(2)
         
-        # Daftar grafik untuk ditampilkan.
         charts_to_display = [
             {"key": "sentiment", "title": "Analisis Sentimen", "col": chart_cols[0]},
             {"key": "trend", "title": "Tren Keterlibatan Seiring Waktu", "col": chart_cols[1]},
@@ -597,7 +586,6 @@ if st.session_state.data is not None:
             {"key": "location", "title": "5 Lokasi Teratas", "col": chart_cols[0]},
         ]
         
-        # Fungsi pembuat prompt untuk menghindari pengulangan
         def get_chart_prompt(key, data_json, version_type="Versi 1"):
             base_prompts = {
                 "sentiment": f"Berdasarkan data distribusi sentimen berikut: {data_json}, berikan 3 wawasan (insights) tajam dan dapat ditindaklanjuti untuk strategi komunikasi merek. Format sebagai daftar bernomor.",
@@ -662,7 +650,7 @@ if st.session_state.data is not None:
                         fig = px.bar(location_data, y='Location', x='Engagements', orientation='h', color='Location')
                     chart_data_for_prompt = location_data.to_json()
                 
-                if fig: # Hanya tampilkan grafik jika ada data untuk dibuat
+                if fig: 
                     st.session_state.chart_figures[chart["key"]] = fig 
 
                     fig.update_layout(
@@ -673,14 +661,20 @@ if st.session_state.data is not None:
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
-                    # Tombol untuk membuat wawasan AI untuk setiap grafik
-                    if st.button(f"✨ Generate AI Insight  ({chart['title']})", key=f"insight_btn_{chart['key']}"):
-                        with st.spinner(f"Menganalisis {chart['title']} dan membuat wawasan..."):
+                    # --- UX UPDATE: Urutan widget diubah ---
+                    selected_insight_version = st.selectbox(
+                        "Pilih Model AI",
+                        options=["gemini-2.0-flash", "llama-3.3-8b-instruct"],
+                        key=f"insight_selector_{chart['key']}"
+                    )
+                    
+                    if st.button(f"✨ Generate AI Insight", key=f"insight_btn_{chart['key']}"):
+                        with st.spinner(f"Menganalisis {chart['title']}..."):
                             if chart_data_for_prompt:
-                                prompt_v1 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 1")
+                                prompt_v1 = get_chart_prompt(chart['key'], chart_data_for_prompt, "gemini-2.0-flash")
                                 insight_v1 = get_ai_insight(prompt_v1)
                                 
-                                prompt_v2 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 2")
+                                prompt_v2 = get_chart_prompt(chart['key'], chart_data_for_prompt, "llama-3.3-8b-instruct")
                                 insight_v2 = get_ai_insight(prompt_v2)
                                 
                                 st.session_state.chart_insights[chart['key']] = {
@@ -689,45 +683,20 @@ if st.session_state.data is not None:
                                 }
                             else:
                                 st.session_state.chart_insights[chart['key']] = {
-                                    "gemini-2.0-flash": "Tidak ada data yang cukup untuk menghasilkan wawasan.",
-                                    "llama-3.3-8b-instruct": "Tidak ada data yang cukup untuk menghasilkan wawasan."
+                                    "gemini-2.0-flash": "Tidak ada data untuk dianalisis.",
+                                    "llama-3.3-8b-instruct": "Tidak ada data untuk dianalisis."
                                 }
-                    
-                    # --- UX UPDATE: Mengganti radio dengan selectbox (dropdown) ---
+                            st.rerun() 
+
                     current_insights = st.session_state.chart_insights.get(chart['key'], {})
-                    selected_insight_version = st.selectbox(
-                        "Pilih Model AI",
-                        options=["gemini-2.0-flash", "llama-3.3-8b-instruct"],
-                        key=f"insight_selector_{chart['key']}"
-                    )
-                    
-                    insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Buat Wawasan AI' untuk menghasilkan wawasan.")
+                    insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Generate AI Insight' untuk menghasilkan wawasan.")
                     st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
 
                 else:
-                    st.write("Tidak ada data yang tersedia untuk grafik ini dengan filter yang dipilih.")
-                    st.session_state.chart_figures[chart["key"]] = None 
-
-                    if st.button(f"✨ Generate AI Insight  ({chart['title']})", key=f"insight_btn_{chart['key']}_no_chart"):
-                        st.session_state.chart_insights[chart['key']] = {
-                            "gemini-2.0-flash": "Tidak ada data yang cukup untuk menghasilkan wawasan.",
-                            "llama-3.3-8b-instruct": "Tidak ada data yang cukup untuk menghasilkan wawasan."
-                        }
-                    
-                    # --- UX UPDATE: Mengganti radio dengan selectbox (dropdown) ---
-                    current_insights = st.session_state.chart_insights.get(chart['key'], {})
-                    selected_insight_version = st.selectbox(
-                        "Pilih Model AI",
-                        options=["gemini-2.0-flash", "llama-3.3-8b-instruct"],
-                        key=f"insight_selector_{chart['key']}_no_chart"
-                    )
-                    
-                    insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Buat Wawasan AI' untuk menghasilkan wawasan.")
-                    st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
+                    st.warning("Tidak ada data yang tersedia untuk grafik ini dengan filter yang dipilih.")
                 
                 st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- [MOVED HERE] Pusat Wawasan AI ---
         st.markdown('<div class="insight-hub">', unsafe_allow_html=True)
         st.markdown("<h3>🧠 Pusat Wawasan AI</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
@@ -787,11 +756,9 @@ if st.session_state.data is not None:
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- Bagian Unduh Laporan HTML ---
         st.markdown("---")
         st.markdown("<h3>📄 Unduh Laporan Analisis</h3>", unsafe_allow_html=True)
         
-        # Kumpulkan semua wawasan dan objek grafik untuk laporan HTML
         chart_insights_for_report = {
             chart_info["key"]: st.session_state.chart_insights.get(chart_info["key"], {}) 
             for chart_info in charts_to_display
