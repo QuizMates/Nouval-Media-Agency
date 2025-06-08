@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Media Intelligence Dashboard",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed" # Mengubah sidebar menjadi collapsed by default
 )
 
 # --- FUNGSI UTAMA & LOGIKA ---
@@ -494,23 +494,33 @@ if st.session_state.data is not None:
 
     # --- NEW: Seluruh blok analisis sekarang ada di dalam kondisi ini ---
     if st.session_state.show_analysis:
-        # Notifikasi "Berikut adalah hasil analisis datamu."
-        st.info("Berikut adalah hasil analisis datamu.")
-
-
-        # --- Sidebar Filter ---
-        with st.sidebar:
-            st.markdown("<h3><i class='fas fa-filter'></i> Filter Data</h3>", unsafe_allow_html=True)
-
-            platform = st.selectbox("Platform", ["All"] + list(df['Platform'].unique()), key='platform_filter')
-            sentiment = st.selectbox("Sentiment", ["All"] + list(df['Sentiment'].unique()), key='sentiment_filter')
-            media_type = st.selectbox("Media Type", ["All"] + list(df['Media Type'].unique()), key='media_type_filter')
-            location = st.selectbox("Location", ["All"] + list(df['Location'].unique()), key='location_filter')
-
+        
+        # --- UX UPDATE: Filter dipindahkan ke dalam expander di main area ---
+        with st.expander("⚙️ Filter Data & Opsi Tampilan", expanded=True):
             min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
-            start_date = st.date_input("Tanggal Mulai", min_date, min_value=min_date, max_value=max_date, key='start_date_filter')
-            end_date = st.date_input("Tanggal Akhir", max_date, min_value=min_date, max_value=max_date, key='end_date_filter')
+
+            # Menggunakan kolom untuk tata letak yang lebih rapi
+            filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 3])
             
+            with filter_col1:
+                platform = st.selectbox("Platform", ["All"] + list(df['Platform'].unique()), key='platform_filter')
+                media_type = st.selectbox("Media Type", ["All"] + list(df['Media Type'].unique()), key='media_type_filter')
+            
+            with filter_col2:
+                sentiment = st.selectbox("Sentiment", ["All"] + list(df['Sentiment'].unique()), key='sentiment_filter')
+                location = st.selectbox("Location", ["All"] + list(df['Location'].unique()), key='location_filter')
+
+            with filter_col3:
+                # Menggunakan satu date_input untuk rentang tanggal
+                date_range = st.date_input(
+                    "Pilih Rentang Tanggal",
+                    value=(min_date, max_date),
+                    min_value=min_date,
+                    max_value=max_date,
+                    format="DD/MM/YYYY"
+                )
+                start_date, end_date = date_range if len(date_range) == 2 else (min_date, max_date)
+
             # Logika reset insight jika filter berubah
             filter_state = f"{platform}{sentiment}{media_type}{location}{start_date}{end_date}"
             if 'last_filter_state' not in st.session_state or st.session_state.last_filter_state != filter_state:
@@ -548,7 +558,6 @@ if st.session_state.data is not None:
                 anomaly = anomalies.iloc[0]
                 st.markdown('<div class="anomaly-card">', unsafe_allow_html=True)
                 st.markdown("<h3>⚠️ Peringatan Anomali Terdeteksi!</h3>", unsafe_allow_html=True)
-                # Menggunakan st.markdown langsung (tanpa div anomaly-text) untuk pesan di dalam card
                 st.markdown(f"""
                     Kami mendeteksi lonjakan keterlibatan yang tidak biasa pada **{anomaly['Date']}** dengan **{int(anomaly['Engagements']):,}** keterlibatan (rata-rata: {int(mean):,} &plusmn; {int(std):,}).
                 """, unsafe_allow_html=True)
