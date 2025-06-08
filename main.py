@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -33,26 +34,23 @@ def configure_gemini_api():
     except Exception as e:
         st.error(f"Gagal mengkonfigurasi Gemini API: {e}. Pastikan API Key valid.")
         return False
-def get_ai_insight(prompt):
-    """
-    Memanggil API Gemini untuk menghasilkan wawasan berdasarkan prompt yang diberikan.
-    Menggunakan model 'gemini-2.0-flash'.
-    """
-    # Pastikan API sudah dikonfigurasi melalui configure_gemini_api()
-    if not configure_gemini_api(): # Memanggil lagi untuk memastikan konfigurasi sebelum setiap request
-        return "Gagal membuat wawasan: API tidak terkonfigurasi."
 
+def get_ai_insight(prompt, model_name='gemini-1.5-flash'):
+    """
+    Memanggil API GenAI untuk menghasilkan wawasan berdasarkan prompt dan model.
+    """
+    if not configure_gemini_api():
+        return "Gagal membuat wawasan: API tidak terkonfigurasi."
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel(model_name)
         response = model.generate_content(prompt)
-        # Mengembalikan teks dari respons. Memastikan respons memiliki struktur yang diharapkan.
         if response.candidates and response.candidates[0].content.parts:
             return response.candidates[0].content.parts[0].text
         else:
-            st.error("Gemini API tidak menghasilkan teks yang valid. Respons tidak terduga.")
-            return "Gagal membuat wawasan. Silakan coba lagi."
+            st.error(f"Model {model_name} tidak menghasilkan teks yang valid.")
+            return "Gagal membuat wawasan."
     except Exception as e:
-        st.error(f"Error saat memanggil Gemini API: {e}. Pastikan API Key valid dan terhubung ke internet.")
+        st.error(f"Error saat memanggil model {model_name}: {e}.")
         return "Gagal membuat wawasan: Terjadi masalah koneksi atau API."
 
 def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_insights, chart_figures_dict, charts_to_display_info):
@@ -275,7 +273,7 @@ if st.session_state.data is not None:
                     selected_model = st.selectbox("Pilih Model AI", ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"], key=f"sel_{chart['key']}")
                     if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
-                            with st.spinner(f"Menganalisis {chart['title']} dengan AI..."):
+                            with st.spinner(f"Menganalisis {chart['title']} dengan 3 model AI..."):
                                 st.session_state.chart_insights[chart['key']] = {model: get_ai_insight(get_chart_prompt(chart['key'], data_for_prompt, model), model) for model in ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"]}
                             st.rerun()
                     
