@@ -273,7 +273,7 @@ if st.session_state.data is None:
 # Tampilan Dasbor Utama
 if st.session_state.data is not None:
     df = st.session_state.data
-    st.markdown(f"""<div class="uploaded-file-info"><h3>☁️ File Berhasil Terunggah! ✅️</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="uploaded-file-info"><h3>📂 File Berhasil Terunggah! ✅️</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     with col1:
