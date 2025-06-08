@@ -143,24 +143,6 @@ def load_css():
             .uploaded-file-info { background-color: rgba(30, 41, 59, 0.6); border: 1px solid #475569; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); color: #cbd5e1; }
             .uploaded-file-info h3 { color: #5eead4; margin-top: 0; margin-bottom: 1rem; }
             .uploaded-file-info p { margin-bottom: 0.5rem; }
-
-            /* -- Tombol Hijau -- */
-            div[data-testid="stButton"] > button[kind="primary"] {
-                background-color: #28a745; /* Hijau */
-                color: white;
-            }
-            div[data-testid="stButton"] > button[kind="primary"]:hover {
-                background-color: #218838; /* Hijau lebih gelap */
-                border-color: #1e7e34;
-            }
-            div[data-testid="stDownloadButton"] > button {
-                background-color: #28a745; /* Hijau */
-                color: white;
-            }
-            div[data-testid="stDownloadButton"] > button:hover {
-                background-color: #218838; /* Hijau lebih gelap */
-                border-color: #1e7e34;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -317,5 +299,5 @@ if st.session_state.data is not None:
         
         with st.container(border=True):
             st.markdown("<h3>📄 Unduh Laporan Analisis</h3>", unsafe_allow_html=True)
-            if st.download_button("Unduh Laporan HTML", data=generate_html_report(st.session_state.campaign_summary, st.session_state.post_idea, st.session_state.anomaly_insight, st.session_state.chart_insights, st.session_state.chart_figures, charts_to_display), file_name="Laporan_Media_Intelligence.html", mime="text/html", use_container_width=True, type="primary"):
+            if st.download_button("Unduh Laporan HTML", data=generate_html_report(st.session_state.campaign_summary, st.session_state.post_idea, st.session_state.anomaly_insight, st.session_state.chart_insights, st.session_state.chart_figures, charts_to_display), file_name="Laporan_Media_Intelligence.html", mime="text/html", use_container_width=True):
                 st.success("Laporan berhasil dibuat!")
