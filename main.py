@@ -34,7 +34,7 @@ def configure_gemini_api():
         st.error(f"Gagal mengkonfigurasi Gemini API: {e}. Pastikan API Key valid.")
         return False
 
-def get_ai_insight(prompt, model_name='gemini-2.0-flash'): # PERUBAHAN 1: Model default diubah
+def get_ai_insight(prompt, model_name='gemini-2.0-flash'):
     """
     Memanggil API GenAI untuk menghasilkan wawasan berdasarkan prompt dan model.
     """
@@ -74,14 +74,15 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
             chart_title = chart_info["title"]
             fig = chart_figures_dict.get(chart_key)
             
-            # PERUBAHAN 2: Logika disederhanakan untuk menangani satu wawasan per grafik
-            insight_text = chart_insights.get(chart_key, "") 
+            # PERUBAHAN 1: Logika dikembalikan untuk menangani beberapa gaya wawasan per grafik
+            insights_for_chart = chart_insights.get(chart_key, {})
             insights_html = ""
-            if insight_text:
-                insights_html = f"""
-                <h4>Wawasan AI (Gemini 2.0 Flash):</h4>
-                <div class="insight-box">{insight_text}</div>
-                """
+            for style, text in insights_for_chart.items():
+                if text:
+                    insights_html += f"""
+                    <h4>Wawasan AI (Gaya: {style}):</h4>
+                    <div class="insight-box">{text}</div>
+                    """
 
             if fig:
                 try:
@@ -98,7 +99,7 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
                     """
                 except Exception as e:
                     chart_figures_html_sections += f"<p>Gagal menyertakan grafik {chart_title} (Error: {e}).</p>"
-            elif insight_text: # Jika ada wawasan tapi tidak ada grafik
+            elif insights_for_chart:
                 chart_figures_html_sections += f"""
                 <div class="insight-sub-section">
                     <h3>{chart_title}</h3>
@@ -241,10 +242,18 @@ if st.session_state.data is not None:
         charts_to_display = [{"key": "sentiment", "title": "Analisis Sentimen"}, {"key": "trend", "title": "Tren Keterlibatan"}, {"key": "platform", "title": "Keterlibatan per Platform"}, {"key": "mediaType", "title": "Distribusi Jenis Media"}, {"key": "location", "title": "5 Lokasi Teratas"}]
         chart_cols = st.columns(2)
         
-        # PERUBAHAN 3: Fungsi prompt disederhanakan untuk satu model
-        def get_chart_prompt(key, data_json):
+        # PERUBAHAN 2: Fungsi prompt diubah untuk menerima gaya jawaban dan memiliki persona yang berbeda
+        def get_chart_prompt(key, data_json, answer_style):
             prompts = {"sentiment": "distribusi sentimen", "trend": "tren keterlibatan", "platform": "keterlibatan per platform", "mediaType": "distribusi jenis media", "location": "keterlibatan per lokasi"}
-            persona = "Anda adalah Gemini 2.0 Flash, seorang analis media AI. Berikan 3 wawasan kunci yang tajam dan actionable dari data ini."
+            
+            personas = {
+                "Jawaban 1": "Anda adalah seorang analis media yang sangat kritis dan skeptis. Fokus pada potensi risiko, kelemahan data, dan anomali yang tidak terduga. Berikan 3 poin observasi tajam.",
+                "Jawaban 2": "Anda adalah seorang ahli strategi branding yang kreatif dan visioner. Lihat data ini sebagai kanvas. Berikan 3 ide kampanye atau konten yang inovatif dan out-of-the-box berdasarkan tren yang ada.",
+                "Jawaban 3": "Anda adalah seorang pakar data yang sangat kuantitatif dan to-the-point. Berikan 3 kesimpulan actionable yang didukung langsung oleh angka-angka dalam data. Sebutkan angka spesifik jika memungkinkan."
+            }
+            
+            persona = personas.get(answer_style, "Anda adalah asisten AI. Berikan 3 wawasan dari data berikut.") # Persona default
+            
             return f"{persona} Analisis data mengenai {prompts.get(key, 'data')}: {data_json}. Sajikan wawasan dalam format daftar bernomor yang jelas."
 
         for i, chart in enumerate(charts_to_display):
@@ -268,17 +277,30 @@ if st.session_state.data is not None:
                         st.plotly_chart(fig, use_container_width=True)
                     else: st.warning("Tidak ada data untuk ditampilkan dengan filter ini.")
                     
-                    # PERUBAHAN 4: Menghapus pilihan model dan menyederhanakan logika tombol dan tampilan wawasan
+                    # PERUBAHAN 3: Menambahkan dropdown dan memperbarui logika tombol serta penyimpanan wawasan
+                    answer_styles = ["Jawaban 1", "Jawaban 2", "Jawaban 3"]
+                    selected_style = st.selectbox(
+                        "Pilih Gaya Jawaban AI:",
+                        answer_styles,
+                        key=f"sel_{chart['key']}"
+                    )
+
                     if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
-                            with st.spinner(f"Menganalisis {chart['title']} dengan Gemini 2.0 Flash..."):
-                                prompt = get_chart_prompt(chart['key'], data_for_prompt)
-                                # Wawasan disimpan langsung ke kunci chart
-                                st.session_state.chart_insights[chart['key']] = get_ai_insight(prompt)
+                            with st.spinner(f"Menganalisis {chart['title']} dengan gaya '{selected_style}'..."):
+                                prompt = get_chart_prompt(chart['key'], data_for_prompt, selected_style)
+                                
+                                # Inisialisasi dictionary untuk chart jika belum ada
+                                if chart['key'] not in st.session_state.chart_insights:
+                                    st.session_state.chart_insights[chart['key']] = {}
+                                
+                                # Simpan wawasan untuk gaya yang dipilih
+                                st.session_state.chart_insights[chart['key']][selected_style] = get_ai_insight(prompt)
                             st.rerun()
                     
-                    # Teks wawasan diambil langsung dari state
-                    insight_text = st.session_state.chart_insights.get(chart.get("key"), "Klik untuk menghasilkan wawasan.")
+                    # Tampilkan wawasan berdasarkan gaya yang dipilih di dropdown
+                    chart_specific_insights = st.session_state.chart_insights.get(chart.get("key"), {})
+                    insight_text = chart_specific_insights.get(selected_style, "Pilih gaya jawaban dan klik tombol untuk menghasilkan wawasan.")
                     st.markdown(f'<div class="insight-box">{insight_text}</div>', unsafe_allow_html=True)
 
         # Wawasan Umum & Unduh
