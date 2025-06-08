@@ -127,20 +127,19 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
     """
     return html_content.encode('utf-8')
 
-# PERUBAHAN UTAMA HANYA DI FUNGSI INI
 def load_css():
     """Menyuntikkan CSS kustom dengan gradien hijau."""
     st.markdown("""
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
-            body { background-color: #042f2e !important; } /* Basis hijau gelap */
+            body { background-color: #042f2e !important; }
             .stApp { 
-                background-image: radial-gradient(at top left, #104e4a, #042f2e, black); /* Gradien radial hijau */
+                background-image: radial-gradient(at top left, #104e4a, #042f2e, black); 
                 color: #e5e7eb; 
             }
             .main-header { font-family: 'Orbitron', sans-serif; text-align: center; margin-bottom: 2rem; }
             .main-header h1 { 
-                background: -webkit-linear-gradient(45deg, #6EE7B7, #10B981); /* Gradien teks hijau */
+                background: -webkit-linear-gradient(45deg, #6EE7B7, #10B981); 
                 -webkit-background-clip: text; 
                 -webkit-text-fill-color: transparent; 
                 font-size: 2.75rem; 
@@ -148,8 +147,8 @@ def load_css():
             }
             .main-header p { color: #9ca3af; font-size: 1.1rem; }
             .chart-container, .insight-hub, .anomaly-card, .uploaded-file-info { 
-                border: 1px solid #134E4A; /* Border hijau gelap */
-                background-color: rgba(16, 56, 48, 0.7); /* Latar belakang kontainer kehijauan */
+                border: 1px solid #134E4A;
+                background-color: rgba(16, 56, 48, 0.7);
                 backdrop-filter: blur(15px); 
                 border-radius: 1rem; 
                 padding: 1.5rem; 
@@ -158,12 +157,12 @@ def load_css():
                 box-sizing: border-box; 
             }
             .anomaly-card { 
-                border: 2px solid #f59e0b; /* Tetap oranye untuk visibilitas anomali */
+                border: 2px solid #f59e0b;
                 background-color: rgba(245, 158, 11, 0.1); 
             }
             .insight-box { 
-                background-color: rgba(4, 47, 46, 0.75); /* Kotak wawasan lebih gelap */
-                border: 1px solid #064E3B; /* Border hijau lebih gelap */
+                background-color: rgba(4, 47, 46, 0.75);
+                border: 1px solid #064E3B;
                 border-radius: 0.5rem; 
                 padding: 1rem; 
                 margin-top: 1rem; 
@@ -173,7 +172,7 @@ def load_css():
                 font-size: 0.9rem; 
             }
             .chart-container h3, .insight-hub h3, .anomaly-card h3, .insight-hub h4, .uploaded-file-info h3 { 
-                color: #34D399; /* Warna aksen utama hijau emerald */
+                color: #34D399;
                 margin-top: 0; 
                 margin-bottom: 1rem; 
                 display: flex; 
@@ -205,6 +204,44 @@ def parse_csv(uploaded_file):
     except Exception as e:
         st.error(f"Gagal memproses file CSV: {e}")
         return None
+
+# PERUBAHAN BARU: Fungsi untuk menjalankan chatbot di dalam dialog
+@st.dialog("AI Media Consultant")
+def run_consultant_chat(df_summary):
+    """Menjalankan antarmuka chat di dalam st.dialog."""
+    st.markdown("Tanyakan apa pun tentang data media Anda atau strategi umum.")
+
+    # Inisialisasi riwayat chat khusus untuk dialog ini
+    if "consultant_messages" not in st.session_state:
+        st.session_state.consultant_messages = [{"role": "assistant", "content": "Halo! Saya adalah konsultan media AI Anda. Apa yang bisa saya bantu analisis hari ini?"}]
+
+    # Tampilkan riwayat chat
+    for msg in st.session_state.consultant_messages:
+        st.chat_message(msg["role"]).write(msg["content"])
+
+    # Dapatkan input dari pengguna
+    if prompt := st.chat_input("Ketik pertanyaan Anda..."):
+        st.session_state.consultant_messages.append({"role": "user", "content": prompt})
+        st.chat_message("user").write(prompt)
+
+        # Buat prompt untuk AI dengan konteks
+        full_prompt = f"""
+        Anda adalah seorang konsultan media AI yang ahli, ramah, dan profesional. 
+        Tugas Anda adalah menjawab pertanyaan pengguna terkait analisis media, strategi kampanye, atau interpretasi data.
+        Gunakan ringkasan data berikut sebagai konteks jika relevan: 
+        ---
+        {df_summary}
+        ---
+        Riwayat percakapan sejauh ini: {st.session_state.consultant_messages}
+        ---
+        Jawab pertanyaan pengguna berikut: "{prompt}"
+        """
+        
+        with st.chat_message("assistant"):
+            with st.spinner("Memikirkan jawaban..."):
+                response = get_ai_insight(full_prompt)
+                st.session_state.consultant_messages.append({"role": "assistant", "content": response})
+                st.write(response)
 
 # --- UI STREAMLIT ---
 load_css()
@@ -238,9 +275,18 @@ if st.session_state.data is not None:
     df = st.session_state.data
     st.markdown(f"""<div class="uploaded-file-info"><h3>☁️ File Terunggah</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
     
-    if st.button("Hapus File & Reset", key="clear_file_btn"):
-        for key in list(st.session_state.keys()): del st.session_state[key]
-        st.rerun()
+    # PERUBAHAN BARU: Menambahkan tombol chatbot di samping tombol reset
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Hapus File & Reset", key="clear_file_btn", use_container_width=True):
+            for key in list(st.session_state.keys()): del st.session_state[key]
+            st.rerun()
+    with col2:
+        if st.button("💬 Buka AI Consultant", key="open_chat_btn", use_container_width=True, type="secondary"):
+            # Ringkasan data untuk diberikan sebagai konteks ke chatbot
+            df_summary_for_chat = df.describe(include='all').to_string()
+            run_consultant_chat(df_summary_for_chat)
+
 
     if not st.session_state.show_analysis:
         if st.button("▶️ Lihat Hasil Analisis Datamu!", key="show_analysis_btn", use_container_width=True, type="primary"):
