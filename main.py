@@ -23,10 +23,9 @@ def configure_gemini_api():
     Mengkonfigurasi API Gemini menggunakan kunci API.
     Dalam aplikasi produksi, gunakan st.secrets.
     """
-    # Ganti dengan kunci API Gemini Anda
-    api_key = "AIzaSyC0VUu6xTFIwH3aP2R7tbhyu4O8m1ICxn4" 
-    if not api_key or api_key == "AIzaSyC0VUu6xTFIwH3aP2R7tbhyu4O8m1ICxn4":
-        st.error("Harap masukkan kunci API Gemini Anda yang valid dalam kode di fungsi configure_gemini_api().")
+    api_key = "AIzaSyC0VUu6xTFIwH3aP2R7tbhyu4O8m1ICxn4"
+    if not api_key:
+        st.warning("API Key Gemini tidak ditemukan. Beberapa fitur AI mungkin tidak berfungsi.")
         return False
     try:
         genai.configure(api_key=api_key)
@@ -47,10 +46,11 @@ def get_ai_insight(prompt, model_name='gemini-1.5-flash'):
         if response.candidates and response.candidates[0].content.parts:
             return response.candidates[0].content.parts[0].text
         else:
-            st.warning(f"Model {model_name} tidak menghasilkan teks yang valid untuk prompt ini.")
+            st.error(f"Model {model_name} tidak menghasilkan teks yang valid.")
             return "Gagal membuat wawasan."
     except Exception as e:
-        return f"Gagal membuat wawasan: Terjadi masalah koneksi atau API dengan model {model_name}. Pastikan kunci API Anda valid dan memiliki kuota."
+        st.error(f"Error saat memanggil model {model_name}: {e}.")
+        return "Gagal membuat wawasan: Terjadi masalah koneksi atau API."
 
 def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_insights, chat_history, chart_figures_dict, charts_to_display_info):
     """
@@ -77,7 +77,10 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
         """
     
     chart_figures_html_sections = ""
-    # (Logika pembuatan laporan HTML lainnya)
+    if chart_figures_dict:
+        for chart_info in charts_to_display_info:
+            # (Sisa logika pembuatan laporan tetap sama)
+            pass
 
     html_content = f"""
     <!DOCTYPE html><html><head><title>Laporan Media Intelligence</title><meta charset="UTF-8">
@@ -132,12 +135,10 @@ def parse_csv(uploaded_file):
         df['Engagements'] = pd.to_numeric(df['Engagements'], errors='coerce')
         df.dropna(subset=['Date', 'Engagements'], inplace=True)
         df['Engagements'] = df['Engagements'].astype(int)
-        
-        required_cols = ['Platform', 'Sentiment', 'Media Type', 'Location', 'Headline']
-        for col in required_cols:
+        for col in ['Platform', 'Sentiment', 'Media Type', 'Location', 'Headline']:
             if col not in df.columns:
                 df[col] = 'N/A'
-        df[required_cols] = df[required_cols].fillna('N/A')
+        df[col] = df[col].fillna('N/A')
         return df
     except Exception as e:
         st.error(f"Gagal memproses file CSV: {e}")
@@ -149,15 +150,12 @@ api_configured = configure_gemini_api()
 
 st.markdown("<div class='main-header'><h1>Media Intelligence Dashboard</h1><p>Ryan Vandiaz Media Agency</p></div>", unsafe_allow_html=True)
 
-# --- Inisialisasi State yang Kuat ---
-defaults = {
-    'data': None, 'chart_insights': {}, 'campaign_summary': "", 'post_idea': "",
-    'anomaly_insight': "", 'chart_figures': {}, 'chat_history': [],
-    'show_analysis': False, 'last_uploaded_file_name': "", 'show_chat': False
-}
-for key, default_value in defaults.items():
+# Inisialisasi State
+for key in ['data', 'chart_insights', 'campaign_summary', 'post_idea', 'anomaly_insight', 'chart_figures', 'chat_history']:
     if key not in st.session_state:
-        st.session_state[key] = default_value
+        st.session_state[key] = [] if key in ['chat_history'] else {} if key in ['chart_insights', 'chart_figures'] else ""
+if 'show_analysis' not in st.session_state: st.session_state.show_analysis = False
+
 
 # Tampilan Unggah File
 if st.session_state.data is None: 
@@ -167,11 +165,10 @@ if st.session_state.data is None:
             st.markdown("### ☁️ Unggah File CSV Anda")
             uploaded_file = st.file_uploader("Label tersembunyi", type="csv", label_visibility="collapsed")
             if uploaded_file:
-                # Reset state saat file baru diunggah untuk sesi yang bersih
-                for key in defaults: st.session_state[key] = defaults[key]
                 st.session_state.data = parse_csv(uploaded_file)
                 if st.session_state.data is not None:
                     st.session_state.last_uploaded_file_name = uploaded_file.name
+                    st.session_state.show_analysis = False
                     st.rerun()
 
 # Tampilan Dasbor Utama
@@ -190,26 +187,28 @@ if st.session_state.data is not None:
 
     if st.session_state.show_analysis:
         
-        # --- Tombol untuk memunculkan Chat AI ---
-        if not st.session_state.show_chat:
-            if st.button("💬 Buka Konsultan AI", key="show_chat_btn", use_container_width=True):
-                st.session_state.show_chat = True
-                st.rerun()
+        # --- FITUR BARU: Chat dengan Konsultan AI ---
+        st.markdown("## 💬 Chat dengan Konsultan AI Anda")
+        with st.container(height=300):
+            for msg in st.session_state.chat_history:
+                st.chat_message(msg["role"]).write(msg["parts"][0])
 
-        # --- Fitur Chat AI (kondisional) ---
-        if st.session_state.show_chat:
-            st.markdown("## 💬 Chat dengan Konsultan AI Anda")
-            with st.container(height=300):
-                for msg in st.session_state.chat_history:
-                    st.chat_message(msg["role"]).write(msg["parts"][0])
-
-            if prompt := st.chat_input("Tanyakan apa saja tentang data Anda..."):
-                st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
+        if prompt := st.chat_input("Tanyakan apa saja tentang data Anda..."):
+            st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
+            st.chat_message("user").write(prompt)
+            
+            with st.spinner("Konsultan AI sedang berpikir..."):
+                # Menambahkan konteks data pada prompt ke AI
+                full_prompt = f"""
+                Anda adalah konsultan media profesional. Pengguna menanyakan: '{prompt}'.
+                Berikut adalah ringkasan data yang sedang dianalisis (5 baris pertama):
+                {df.head().to_json(orient='records')}
                 
-                with st.spinner("Konsultan AI sedang berpikir..."):
-                    full_prompt = f"Anda adalah konsultan media profesional. Pengguna menanyakan: '{prompt}'. Berikut adalah ringkasan data yang sedang dianalisis (5 baris pertama): {df.head().to_json(orient='records')}. Jawab pertanyaan pengguna berdasarkan konteks data ini."
-                    response = get_ai_insight(full_prompt, model_name='gemini-1.5-pro-latest')
-                    st.session_state.chat_history.append({"role": "assistant", "parts": [response]})
+                Jawab pertanyaan pengguna berdasarkan konteks data ini.
+                """
+                response = get_ai_insight(full_prompt, model_name='gemini-1.5-pro-latest')
+                st.session_state.chat_history.append({"role": "assistant", "parts": [response]})
+                st.chat_message("assistant").write(response)
                 st.rerun()
 
         st.markdown("---")
@@ -218,7 +217,8 @@ if st.session_state.data is not None:
             def get_multiselect(label, options):
                 all_option = f"Pilih Semua {label}"
                 selection = st.multiselect(label, [all_option] + options)
-                return options if all_option in selection else selection
+                if all_option in selection: return options
+                return selection
 
             min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
             fc1, fc2, fc3 = st.columns([2, 2, 3])
@@ -232,6 +232,7 @@ if st.session_state.data is not None:
                 date_range = st.date_input("Rentang Tanggal", (min_date, max_date), min_date, max_date, format="DD/MM/YYYY")
                 start_date, end_date = date_range if len(date_range) == 2 else (min_date, max_date)
 
+        # Filter dan proses data
         query_parts = ["(@start_date <= Date <= @end_date)"]
         params = {'start_date': pd.to_datetime(start_date), 'end_date': pd.to_datetime(end_date)}
         if platform: query_parts.append("Platform in @platform"); params['platform'] = platform
@@ -240,17 +241,16 @@ if st.session_state.data is not None:
         if location: query_parts.append("Location in @location"); params['location'] = location
         filtered_df = df.query(" & ".join(query_parts), local_dict=params)
 
+        # Tampilan Grafik & AI
         charts_to_display = [{"key": "sentiment", "title": "Analisis Sentimen"}, {"key": "trend", "title": "Tren Keterlibatan"}, {"key": "platform", "title": "Keterlibatan per Platform"}, {"key": "mediaType", "title": "Distribusi Jenis Media"}, {"key": "location", "title": "5 Lokasi Teratas"}]
         chart_cols = st.columns(2)
         
-        # --- UPDATE: Hanya menggunakan model Gemini ---
-        gemini_models = ["gemini-1.5-flash", "gemini-1.5-pro-latest"]
         def get_chart_prompt(key, data_json, model_name):
             prompts = {"sentiment": "distribusi sentimen", "trend": "tren keterlibatan", "platform": "keterlibatan per platform", "mediaType": "distribusi jenis media", "location": "keterlibatan per lokasi"}
             personas = {
-                "gemini-1.5-flash": "Anda konsultan media (Cepat & Taktis). Berikan 3 wawasan taktis dari data ini.",
-                "gemini-1.5-pro-latest": "Anda analis pasar futuristik (Mendalam & Visioner). Analisis implikasi jangka panjang (6-12 bulan) & potensi disrupsi."
-            }
+                "gemini-1.5-flash": "Anda konsultan media. Berikan 3 wawasan taktis dari data ini.",
+                "llama-3.3-8b-instruct": "Anda brand strategist. Fokus pada peluang & risiko tersembunyi. Berikan 3 wawasan alternatif.",
+                "gemini-1.5-pro-latest": "Anda analis pasar futuristik. Analisis implikasi jangka panjang (6-12 bulan) & potensi disrupsi."}
             return f"{personas.get(model_name)} Data {prompts.get(key)}: {data_json}. Format sebagai daftar bernomor."
 
         for i, chart in enumerate(charts_to_display):
@@ -274,11 +274,11 @@ if st.session_state.data is not None:
                         st.plotly_chart(fig, use_container_width=True)
                     else: st.warning("Tidak ada data untuk ditampilkan dengan filter ini.")
                     
-                    selected_model = st.selectbox("Pilih Model AI Gemini", gemini_models, key=f"sel_{chart['key']}")
+                    selected_model = st.selectbox("Pilih Model AI", ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"], key=f"sel_{chart['key']}")
                     if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
                             with st.spinner(f"Menganalisis {chart['title']}..."):
-                                st.session_state.chart_insights[chart['key']] = {model: get_ai_insight(get_chart_prompt(chart['key'], data_for_prompt, model), model) for model in gemini_models}
+                                st.session_state.chart_insights[chart['key']] = {model: get_ai_insight(get_chart_prompt(chart['key'], data_for_prompt, model), model) for model in ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"]}
                             st.rerun()
                     
                     insight_text = st.session_state.chart_insights.get(chart.get("key"), {}).get(selected_model, "Klik untuk menghasilkan wawasan.")
@@ -292,7 +292,7 @@ if st.session_state.data is not None:
                 st.markdown("<h4>⚡ Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
                 if st.button("Buat Ringkasan", use_container_width=True):
                     with st.spinner("Membuat ringkasan..."):
-                        st.session_state.campaign_summary = get_ai_insight(f"Data: {filtered_df.describe().to_json()}. Buat ringkasan eksekutif dan 3 rekomendasi strategis.", model_name='gemini-1.5-pro-latest')
+                        st.session_state.campaign_summary = get_ai_insight(f"Data: {filtered_df.describe().to_json()}. Buat ringkasan eksekutif dan 3 rekomendasi strategis.")
                 st.info(st.session_state.campaign_summary or "Klik untuk ringkasan strategis.")
             with c2:
                 st.markdown("<h4>💡 Generator Ide Konten</h4>", unsafe_allow_html=True)
