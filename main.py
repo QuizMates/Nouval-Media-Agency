@@ -135,10 +135,13 @@ def parse_csv(uploaded_file):
         df['Engagements'] = pd.to_numeric(df['Engagements'], errors='coerce')
         df.dropna(subset=['Date', 'Engagements'], inplace=True)
         df['Engagements'] = df['Engagements'].astype(int)
-        for col in ['Platform', 'Sentiment', 'Media Type', 'Location', 'Headline']:
+        
+        # FIX: Ensure all required columns exist and fill NA for all of them
+        required_cols = ['Platform', 'Sentiment', 'Media Type', 'Location', 'Headline']
+        for col in required_cols:
             if col not in df.columns:
                 df[col] = 'N/A'
-        df[col] = df[col].fillna('N/A')
+        df[required_cols] = df[required_cols].fillna('N/A')
         return df
     except Exception as e:
         st.error(f"Gagal memproses file CSV: {e}")
@@ -150,12 +153,22 @@ api_configured = configure_gemini_api()
 
 st.markdown("<div class='main-header'><h1>Media Intelligence Dashboard</h1><p>Ryan Vandiaz Media Agency</p></div>", unsafe_allow_html=True)
 
-# Inisialisasi State
-for key in ['data', 'chart_insights', 'campaign_summary', 'post_idea', 'anomaly_insight', 'chart_figures', 'chat_history']:
+# --- FIX: Robust Session State Initialization ---
+# Define default values for all session state keys to prevent AttributeErrors
+defaults = {
+    'data': None,
+    'chart_insights': {},
+    'campaign_summary': "",
+    'post_idea': "",
+    'anomaly_insight': "",
+    'chart_figures': {},
+    'chat_history': [],
+    'show_analysis': False,
+    'last_uploaded_file_name': "" # This was the missing key
+}
+for key, default_value in defaults.items():
     if key not in st.session_state:
-        st.session_state[key] = [] if key in ['chat_history'] else {} if key in ['chart_insights', 'chart_figures'] else ""
-if 'show_analysis' not in st.session_state: st.session_state.show_analysis = False
-
+        st.session_state[key] = default_value
 
 # Tampilan Unggah File
 if st.session_state.data is None: 
