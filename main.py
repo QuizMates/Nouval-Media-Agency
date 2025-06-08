@@ -34,23 +34,6 @@ def configure_gemini_api():
         st.error(f"Gagal mengkonfigurasi Gemini API: {e}. Pastikan API Key valid.")
         return False
 
-def get_ai_insight(prompt, model_name='gemini-1.5-flash'):
-    """
-    Memanggil API GenAI untuk menghasilkan wawasan berdasarkan prompt dan model.
-    """
-    if not configure_gemini_api():
-        return "Gagal membuat wawasan: API tidak terkonfigurasi."
-    try:
-        model = genai.GenerativeModel(model_name)
-        response = model.generate_content(prompt)
-        if response.candidates and response.candidates[0].content.parts:
-            return response.candidates[0].content.parts[0].text
-        else:
-            st.error(f"Model {model_name} tidak menghasilkan teks yang valid.")
-            return "Gagal membuat wawasan."
-    except Exception as e:
-        st.error(f"Error saat memanggil model {model_name}: {e}.")
-        return "Gagal membuat wawasan: Terjadi masalah koneksi atau API."
 
 def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_insights, chart_figures_dict, charts_to_display_info):
     """
