@@ -85,8 +85,8 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
             fig = chart_figures_dict.get(chart_key) # Get the figure object from the dictionary
             # Mengambil semua wawasan versi untuk chart_key
             insights_for_chart = chart_insights.get(chart_key, {}) 
-            insight_text_v1 = insights_for_chart.get("Insight Versi 1", "Belum ada wawasan yang dibuat.")
-            insight_text_v2 = insights_for_chart.get("Insight Versi 2", "Belum ada wawasan yang dibuat.")
+            insight_text_v1 = insights_for_chart.get("gemini-2.0-flash", "Belum ada wawasan yang dibuat.")
+            insight_text_v2 = insights_for_chart.get("llama-3.3-8b-instruct", "Belum ada wawasan yang dibuat.")
 
 
             if fig: # Check if a figure exists for this chart
@@ -109,9 +109,9 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
                     <div class="insight-sub-section">
                         <h3>{chart_title}</h3>
                         <img src="data:image/png;base64,{img_base64}" alt="{chart_title}" style="max-width: 100%; height: auto; display: block; margin: 10px auto; border: 1px solid #ddd; border-radius: 5px;">
-                        <h4>Wawasan AI Versi 1:</h4>
+                        <h4>Wawasan dari gemini-2.0-flash:</h4>
                         <div class="insight-box">{insight_text_v1}</div>
-                        <h4>Wawasan AI Versi 2:</h4>
+                        <h4>Wawasan dari llama-3.3-8b-instruct:</h4>
                         <div class="insight-box">{insight_text_v2}</div>
                     </div>
                     """
@@ -120,9 +120,9 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
                     <div class="insight-sub-section">
                         <h3>{chart_title}</h3>
                         <p>Gagal menyertakan grafik ini (Error: {e}).</p>
-                        <h4>Wawasan AI Versi 1:</h4>
+                        <h4>Wawasan dari gemini-2.0-flash:</h4>
                         <div class="insight-box">{insight_text_v1}</div>
-                        <h4>Wawasan AI Versi 2:</h4>
+                        <h4>Wawasan dari llama-3.3-8b-instruct:</h4>
                         <div class="insight-box">{insight_text_v2}</div>
                     </div>
                     """
@@ -133,9 +133,9 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
                     <div class="insight-sub-section">
                         <h3>{chart_title}</h3>
                         <p>Tidak ada grafik yang tersedia untuk {chart_title}.</p>
-                        <h4>Wawasan AI Versi 1:</h4>
+                        <h4>Wawasan dari gemini-2.0-flash:</h4>
                         <div class="insight-box">{insight_text_v1}</div>
-                        <h4>Wawasan AI Versi 2:</h4>
+                        <h4>Wawasan dari llama-3.3-8b-instruct:</h4>
                         <div class="insight-box">{insight_text_v2}</div>
                     </div>
                     """
@@ -161,7 +161,7 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
             h1, h2, h3, h4 {{ color: #2c3e50; margin-top: 1.5em; margin-bottom: 0.5em; }}
             .section {{ background-color: #fff; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
             .insight-sub-section {{ margin-top: 1em; padding-left: 15px; border-left: 3px solid #eee; }}
-            .insight-box {{ background-color: #e9ecef; padding: 10px; border-radius: 5px; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; }} /* Added word-wrap */
+            .insight-box {{ background-color: #e9ecef; padding: 10px; border-radius: 5px; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; }}
         </style>
     </head>
     <body>
@@ -188,26 +188,24 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
     </body>
     </html>
     """
-    return html_content.encode('utf-8') # Encoding to bytes for download
+    return html_content.encode('utf-8')
 
 def load_css():
-    """Menyuntikkan CSS kustom untuk gaya visual Neumorphism & Glassmorphism."""
+    """Menyuntikkan CSS kustom untuk gaya visual modern (terinspirasi GitHub)."""
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-            /* --- Tema Neumorphism & Glassmorphism --- */
-
-            /* Palet Warna & Variabel */
+            /* --- Tema Modern Gelap (Inspirasi GitHub) --- */
             :root {
-                --bg-color: #2e3440;
-                --primary-text-color: #eceff4;
-                --secondary-text-color: #d8dee9;
-                --accent-color: #88c0d0;
-                --shadow-light: rgba(216, 222, 233, 0.1);
-                --shadow-dark: rgba(36, 41, 51, 0.8);
-                --glass-bg: rgba(46, 52, 64, 0.6);
-                --glass-border: rgba(216, 222, 233, 0.15);
+                --bg-color: #0d1117;
+                --card-bg-color: #161b22;
+                --border-color: #30363d;
+                --primary-text-color: #e6edf3;
+                --secondary-text-color: #8b949e;
+                --accent-color-green: #238636;
+                --accent-color-green-hover: #2ea043;
+                --accent-color-blue: #58a6ff;
             }
 
             /* Pengaturan Dasar */
@@ -216,104 +214,106 @@ def load_css():
                 font-family: 'Inter', sans-serif;
             }
             .stApp {
-                background-color: var(--bg-color);
+                background-image: radial-gradient(circle at 1px 1px, #21262d 1px, var(--bg-color) 0);
+                background-size: 40px 40px;
                 color: var(--primary-text-color);
             }
             
             /* Header */
             .main-header {
                 text-align: center;
-                margin-bottom: 2rem;
+                margin-bottom: 3rem;
+                padding-top: 2rem;
             }
             .main-header h1 {
                 color: var(--primary-text-color);
-                font-size: 2.75rem;
-                font-weight: 700;
-                text-shadow: 1px 1px 2px var(--shadow-dark);
+                font-size: 3rem;
+                font-weight: 800;
+                letter-spacing: -1.5px;
             }
             .main-header p {
                 color: var(--secondary-text-color);
-                font-size: 1.1rem;
+                font-size: 1.25rem;
+                margin-top: -0.5rem;
             }
 
-            /* Sidebar (Glassmorphism) */
+            /* Sidebar */
             [data-testid="stSidebar"] {
-                background: var(--glass-bg);
-                backdrop-filter: blur(15px);
-                border-right: 1px solid var(--glass-border);
+                background-color: var(--bg-color);
+                border-right: 1px solid var(--border-color);
             }
             [data-testid="stSidebar"] h3 {
-                color: var(--accent-color);
+                color: var(--primary-text-color);
                 font-weight: 600;
-                text-shadow: 1px 1px 2px var(--shadow-dark);
             }
 
-            /* Container Utama & Kartu (Glassmorphism) */
+            /* Container Utama & Kartu */
             .chart-container, .insight-hub, .anomaly-card, .uploaded-file-info {
-                background: var(--glass-bg);
-                backdrop-filter: blur(15px);
-                border: 1px solid var(--glass-border);
-                border-radius: 1.25rem;
+                background-color: var(--card-bg-color);
+                border: 1px solid var(--border-color);
+                border-radius: 0.75rem;
                 padding: 1.5rem;
-                box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light);
                 margin-bottom: 2rem;
                 box-sizing: border-box;
             }
              .anomaly-card {
-                border-color: #bf616a; /* Warna merah untuk anomali */
+                border-left: 4px solid #f85149;
              }
 
             /* Judul dalam kartu */
             .chart-container h3, .insight-hub h3, .anomaly-card h3, .uploaded-file-info h3,
             .insight-hub h4 {
-                color: var(--accent-color);
+                color: var(--primary-text-color);
                 margin-top: 0;
                 margin-bottom: 1rem;
                 font-weight: 600;
+                font-size: 1.2rem;
+            }
+            .insight-hub h4 {
+                 color: var(--secondary-text-color);
+                 font-size: 1rem;
+                 font-weight: 500;
             }
 
-            /* Kotak Wawasan AI (Inset Neumorphism) */
+            /* Kotak Wawasan AI */
             .insight-box {
-                background-color: var(--bg-color);
-                border-radius: 1rem;
+                background-color: #0d1117;
+                border: 1px solid var(--border-color);
+                border-radius: 0.5rem;
                 padding: 1.25rem;
                 margin-top: 1rem;
                 min-height: 150px;
                 font-size: 0.95rem;
                 color: var(--secondary-text-color);
-                box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
                 white-space: pre-wrap;
                 word-wrap: break-word;
             }
 
-            /* Tombol (Neumorphism) */
+            /* Tombol */
             .stButton > button {
-                background: var(--bg-color);
-                color: var(--secondary-text-color);
-                border: none;
-                border-radius: 0.75rem;
-                padding: 0.75rem 1.25rem;
+                background-color: #21262d;
+                color: var(--primary-text-color);
+                border: 1px solid var(--border-color);
+                border-radius: 0.5rem;
+                padding: 0.6rem 1.2rem;
                 font-weight: 500;
-                box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
                 transition: all 0.2s ease-in-out;
             }
             .stButton > button:hover {
-                color: var(--accent-color);
-                box-shadow: 3px 3px 7px var(--shadow-dark), -3px -3px 7px var(--shadow-light);
+                background-color: #30363d;
+                border-color: var(--secondary-text-color);
             }
-            .stButton > button:active {
-                box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
-                transform: translateY(1px);
-            }
-            /* Tombol unduh utama */
+            
+            /* Tombol utama (unduh & buat) */
             .stButton > button[kind="primary"] {
-                background: var(--accent-color);
-                color: var(--bg-color);
-                font-weight: 700;
+                background: var(--accent-color-green);
+                color: white;
+                font-weight: 600;
+                border: 1px solid var(--accent-color-green-hover);
             }
             .stButton > button[kind="primary"]:hover {
-                 background: #81a1c1; /* Warna lebih gelap saat hover */
-                 color: var(--bg-color);
+                 background: var(--accent-color-green-hover);
+                 border-color: var(--accent-color-green-hover);
             }
 
             /* Menyesuaikan elemen Streamlit lainnya */
@@ -333,22 +333,18 @@ def parse_csv(uploaded_file):
         string_data = uploaded_file.getvalue().decode("utf-8")
         df = pd.read_csv(io.StringIO(string_data))
         
-        # --- PERBAIKAN: Mengganti nama kolom 'Media_Type' menjadi 'Media Type' ---
         if 'Media_Type' in df.columns:
             df.rename(columns={'Media_Type': 'Media Type'}, inplace=True)
-        # ----------------------------------------------------------------------
         
-        # Pembersihan data
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         df['Engagements'] = pd.to_numeric(df['Engagements'], errors='coerce')
         df.dropna(subset=['Date', 'Engagements'], inplace=True)
         df['Engagements'] = df['Engagements'].astype(int)
         
-        # Memastikan kolom lain ada
         required_cols = ['Platform', 'Sentiment', 'Media Type', 'Location', 'Headline']
         for col in required_cols:
             if col not in df.columns:
-                df[col] = 'N/A' # Isi dengan N/A jika tidak ada
+                df[col] = 'N/A'
         df[required_cols] = df[required_cols].fillna('N/A')
 
         return df
@@ -358,13 +354,13 @@ def parse_csv(uploaded_file):
 
 # --- UI STREAMLIT ---
 load_css()
-api_configured = configure_gemini_api() # Panggil fungsi konfigurasi API di awal
+api_configured = configure_gemini_api()
 
 # Header Utama
 st.markdown("""
     <div class="main-header">
         <h1>Media Intelligence Dashboard</h1>
-        <p>Didukung oleh AI Gemini</p>
+        <p>Ryan Vandiaz Media Agency</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -373,7 +369,7 @@ st.markdown("""
 if 'data' not in st.session_state:
     st.session_state.data = None
 if 'chart_insights' not in st.session_state:
-    st.session_state.chart_insights = {} # Sekarang akan menyimpan dict {"key": {"Versi 1": ..., "Versi 2": ...}}
+    st.session_state.chart_insights = {}
 if 'campaign_summary' not in st.session_state:
     st.session_state.campaign_summary = ""
 if 'post_idea' not in st.session_state:
@@ -382,9 +378,9 @@ if 'anomaly_insight' not in st.session_state:
     st.session_state.anomaly_insight = ""
 if 'chart_figures' not in st.session_state:
     st.session_state.chart_figures = {}
-if 'last_uploaded_file_name' not in st.session_state: # Tambahkan inisialisasi untuk nama file
+if 'last_uploaded_file_name' not in st.session_state:
     st.session_state.last_uploaded_file_name = None
-if 'last_uploaded_file_size' not in st.session_state: # Tambahkan inisialisasi untuk ukuran file
+if 'last_uploaded_file_size' not in st.session_state:
     st.session_state.last_uploaded_file_size = None
 
 
@@ -398,17 +394,12 @@ if st.session_state.data is None:
             st.write("Pastikan file memiliki kolom 'Date', 'Engagements', 'Sentiment', 'Platform', 'Media_Type', 'Location', dan (opsional) 'Headline'.")
             uploaded_file = st.file_uploader("Pilih file CSV", type="csv", key="main_file_uploader")
             if uploaded_file is not None:
-                # Periksa apakah file yang diunggah sama dengan yang terakhir kali diproses
-                # Ini penting untuk menghindari pemrosesan ulang saat widget file_uploader mempertahankan nilainya
                 if uploaded_file.name != st.session_state.last_uploaded_file_name or uploaded_file.size != st.session_state.last_uploaded_file_size:
                     st.session_state.data = parse_csv(uploaded_file)
                     if st.session_state.data is not None:
-                        # Simpan detail file
                         st.session_state.last_uploaded_file_name = uploaded_file.name
                         st.session_state.last_uploaded_file_size = uploaded_file.size
-                        st.rerun() # PERBAIKAN: Memaksa rerun untuk menyembunyikan bagian unggah dan menampilkan dashboard
-                # else:
-                #     st.info("File ini sudah diunggah dan dianalisis.") # Opsional: pesan jika file yang sama diunggah ulang
+                        st.rerun() 
             st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -416,7 +407,6 @@ if st.session_state.data is None:
 if st.session_state.data is not None:
     df = st.session_state.data
 
-    # Menampilkan informasi file yang terunggah dan tombol hapus
     st.markdown('<div class="uploaded-file-info">', unsafe_allow_html=True)
     st.markdown(f"""
         <h3>☁️ File Terunggah</h3>
@@ -425,22 +415,21 @@ if st.session_state.data is not None:
     """, unsafe_allow_html=True)
     
     if st.button("Hapus File & Reset", key="clear_file_btn"):
-        st.session_state.data = None # Hapus data
-        st.session_state.chart_insights = {} # Bersihkan wawasan
+        st.session_state.data = None
+        st.session_state.chart_insights = {}
         st.session_state.campaign_summary = ""
         st.session_state.post_idea = ""
         st.session_state.anomaly_insight = ""
         st.session_state.chart_figures = {}
-        st.session_state.last_filter_state = "" # Reset filter state
-        st.session_state.last_uploaded_file_name = None # Hapus info file
-        st.session_state.last_uploaded_file_size = None # Hapus info file
-        st.rerun() # Rerun aplikasi untuk menampilkan kembali bagian upload
-    st.markdown('</div>', unsafe_allow_html=True) # Tutup div
-
+        st.session_state.last_filter_state = ""
+        st.session_state.last_uploaded_file_name = None
+        st.session_state.last_uploaded_file_size = None
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Sidebar Filter ---
     with st.sidebar:
-        st.markdown("<h3><i class='fas fa-filter'></i> Filter Data</h3>", unsafe_allow_html=True)
+        st.markdown("<h3>Filter Data</h3>", unsafe_allow_html=True)
 
         platform = st.selectbox("Platform", ["All"] + list(df['Platform'].unique()), key='platform_filter')
         sentiment = st.selectbox("Sentiment", ["All"] + list(df['Sentiment'].unique()), key='sentiment_filter')
@@ -451,30 +440,22 @@ if st.session_state.data is not None:
         start_date = st.date_input("Tanggal Mulai", min_date, min_value=min_date, max_value=max_date, key='start_date_filter')
         end_date = st.date_input("Tanggal Akhir", max_date, min_value=min_date, max_value=max_date, key='end_date_filter')
         
-        # Logika reset insight jika filter berubah
         filter_state = f"{platform}{sentiment}{media_type}{location}{start_date}{end_date}"
         if 'last_filter_state' not in st.session_state or st.session_state.last_filter_state != filter_state:
             st.session_state.chart_insights = {}
             st.session_state.campaign_summary = ""
             st.session_state.post_idea = ""
             st.session_state.anomaly_insight = ""
-            st.session_state.chart_figures = {} # Reset chart figures juga
+            st.session_state.chart_figures = {}
             st.session_state.last_filter_state = filter_state
 
-
-    # Filter DataFrame
     filtered_df = df[
-        (df['Date'].dt.date >= start_date) &
-        (df['Date'].dt.date <= end_date)
+        (df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)
     ]
-    if platform != "All":
-        filtered_df = filtered_df[filtered_df['Platform'] == platform]
-    if sentiment != "All":
-        filtered_df = filtered_df[filtered_df['Sentiment'] == sentiment]
-    if media_type != "All":
-        filtered_df = filtered_df[filtered_df['Media Type'] == media_type]
-    if location != "All":
-        filtered_df = filtered_df[filtered_df['Location'] == location]
+    if platform != "All": filtered_df = filtered_df[filtered_df['Platform'] == platform]
+    if sentiment != "All": filtered_df = filtered_df[filtered_df['Sentiment'] == sentiment]
+    if media_type != "All": filtered_df = filtered_df[filtered_df['Media Type'] == media_type]
+    if location != "All": filtered_df = filtered_df[filtered_df['Location'] == location]
 
     # --- Pusat Wawasan AI ---
     st.markdown('<div class="insight-hub">', unsafe_allow_html=True)
@@ -482,7 +463,7 @@ if st.session_state.data is not None:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("<h4>⚡ Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
+        st.markdown("<h4>Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
         if st.button("Buat Ringkasan", key="summary_btn", use_container_width=True):
             with st.spinner("Membuat ringkasan strategi..."):
                 prompt = f"""
@@ -498,11 +479,11 @@ if st.session_state.data is not None:
                 summary = get_ai_insight(prompt)
                 st.session_state.campaign_summary = summary
                 
-        st.markdown(f'<div class="insight-box">{st.session_state.campaign_summary or "Klik untuk membuat ringkasan strategis dari semua data."}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="insight-box">{st.session_state.campaign_summary or "Klik untuk membuat ringkasan strategis."}</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<h4>💡 Generator Ide Konten AI</h4>", unsafe_allow_html=True)
-        if st.button("✨ Buat Ide Postingan", key="idea_btn", use_container_width=True):
+        st.markdown("<h4>Generator Ide Konten AI</h4>", unsafe_allow_html=True)
+        if st.button("Buat Ide Postingan", key="idea_btn", use_container_width=True):
             with st.spinner("Mencari ide terbaik..."):
                 if not filtered_df.empty:
                     best_platform_series = filtered_df.groupby('Platform')['Engagements'].sum()
@@ -511,28 +492,21 @@ if st.session_state.data is not None:
                         top_posts = filtered_df[filtered_df['Platform'] == best_platform].nlargest(5, 'Engagements')
                         top_headlines = ', '.join(top_posts['Headline'].tolist())
                     else:
-                        best_platform = "tidak diketahui"
-                        top_headlines = "tidak ada data"
+                        best_platform, top_headlines = "tidak diketahui", "tidak ada data"
                 else:
-                    best_platform = "tidak diketahui"
-                    top_headlines = "tidak ada data"
-
+                    best_platform, top_headlines = "tidak diketahui", "tidak ada data"
 
                 prompt = f"""
-                Anda adalah seorang ahli strategi media sosial yang kreatif. Berdasarkan data berikut, buatlah satu contoh postingan untuk platform **{best_platform}**.
-                - Platform Berkinerja Terbaik: {best_platform}
-                - Topik Berkinerja Tinggi (dari judul): {top_headlines}
-                Postingan harus:
-                1. Ditulis dalam Bahasa Indonesia.
-                2. Memiliki nada yang menarik dan sesuai untuk {best_platform}.
-                3. Memberikan saran konsep visual yang jelas.
-                4. Menyertakan 3-5 tagar yang relevan.
-                Format output dengan jelas: "Platform:", "Konten Postingan:", "Saran Visual:", dan "Tagar:".
+                Anda adalah seorang ahli strategi media sosial. Berdasarkan data berikut, buatlah satu contoh postingan untuk {best_platform}.
+                - Platform Performa Terbaik: {best_platform}
+                - Topik Performa Tinggi (dari judul): {top_headlines}
+                Postingan harus ditulis dalam Bahasa Indonesia, menarik, menyertakan saran visual, dan 3-5 tagar relevan.
+                Format dengan jelas: "Platform:", "Konten Postingan:", "Saran Visual:", dan "Tagar:".
                 """
                 idea = get_ai_insight(prompt)
                 st.session_state.post_idea = idea
                 
-        st.markdown(f'<div class="insight-box">{st.session_state.post_idea or "Klik untuk menghasilkan ide postingan berdasarkan data kinerja terbaik Anda."}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="insight-box">{st.session_state.post_idea or "Klik untuk menghasilkan ide postingan."}</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -548,21 +522,18 @@ if st.session_state.data is not None:
             anomaly = anomalies.iloc[0]
             st.markdown('<div class="anomaly-card">', unsafe_allow_html=True)
             st.markdown("<h3>⚠️ Peringatan Anomali Terdeteksi!</h3>", unsafe_allow_html=True)
-            st.markdown(f"""
-                Kami mendeteksi lonjakan keterlibatan yang tidak biasa pada **{anomaly['Date']}** dengan **{int(anomaly['Engagements']):,}** keterlibatan (rata-rata: {int(mean):,}).
-            """, unsafe_allow_html=True)
+            st.markdown(f"Lonjakan keterlibatan terdeteksi pada **{anomaly['Date']}** dengan **{int(anomaly['Engagements']):,}** keterlibatan (rata-rata: {int(mean):,}).")
             
             if st.button("✨ Jelaskan Anomali Ini", key="anomaly_btn"):
                 with st.spinner("Menganalisis penyebab anomali..."):
                     anomaly_day_data = filtered_df[filtered_df['Date'].dt.date == anomaly['Date']]
                     top_headlines_on_anomaly_day = ', '.join(anomaly_day_data.nlargest(3, 'Engagements')['Headline'].tolist())
-
                     prompt = f"""
-                    Anda adalah seorang analis data intelijen media. Terdeteksi anomali keterlibatan pada {anomaly['Date']}.
-                    - Keterlibatan pada hari itu: {anomaly['Engagements']}
-                    - Rata-rata keterlibatan historis (dari data yang difilter): {mean:.2f}
-                    - Judul berita teratas yang berkontribusi pada hari itu (jika ada): {top_headlines_on_anomaly_day if top_headlines_on_anomaly_day else "Tidak ada judul spesifik yang ditemukan."}
-                    Berikan 3 kemungkinan penyebab anomali ini dan 2 rekomendasi tindakan. Format sebagai daftar bernomor.
+                    Anda adalah seorang analis data. Terdeteksi anomali keterlibatan pada {anomaly['Date']}.
+                    - Keterlibatan hari itu: {anomaly['Engagements']}
+                    - Rata-rata keterlibatan: {mean:.2f}
+                    - Judul berita teratas hari itu: {top_headlines_on_anomaly_day if top_headlines_on_anomaly_day else "N/A"}
+                    Berikan 3 kemungkinan penyebab dan 2 rekomendasi tindakan dalam daftar bernomor.
                     """
                     insight = get_ai_insight(prompt)
                     st.session_state.anomaly_insight = insight
@@ -570,7 +541,6 @@ if st.session_state.data is not None:
             if st.session_state.anomaly_insight:
                 st.markdown(f'<div class="insight-box">{st.session_state.anomaly_insight}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
-
 
     # --- Tampilan Grafik ---
     chart_cols = st.columns(2)
@@ -585,14 +555,14 @@ if st.session_state.data is not None:
     
     def get_chart_prompt(key, data_json, version_type="Versi 1"):
         base_prompts = {
-            "sentiment": f"Berdasarkan data distribusi sentimen berikut: {data_json}, berikan 3 wawasan (insights) tajam dan dapat ditindaklanjuti untuk strategi komunikasi merek. Format sebagai daftar bernomor.",
-            "trend": f"Berdasarkan 10 data tren keterlibatan harian terakhir ini: {data_json}, berikan 3 wawasan strategis tentang puncak, penurunan, dan pola umum. Apa artinya ini bagi ritme kampanye? Format sebagai daftar bernomor.",
-            "platform": f"Berdasarkan data keterlibatan per platform ini: {data_json}, berikan 3 wawasan yang dapat ditindaklanjuti. Identifikasi platform 'juara' dan 'peluang'. Format sebagai daftar bernomor.",
-            "mediaType": f"Berdasarkan data distribusi jenis media ini: {data_json}, berikan 3 wawasan strategis. Analisis preferensi audiens berdasarkan format konten. Format sebagai daftar bernomor.",
-            "location": f"Berdasarkan data keterlibatan per lokasi ini: {data_json}, berikan 3 wawasan geo-strategis. Identifikasi pasar utama dan pasar yang sedang berkembang. Format sebagai daftar bernomor."
+            "sentiment": f"Berdasarkan data distribusi sentimen: {data_json}, berikan 3 wawasan tajam untuk strategi komunikasi merek.",
+            "trend": f"Berdasarkan 10 data tren keterlibatan harian terakhir: {data_json}, berikan 3 wawasan tentang puncak, penurunan, dan pola untuk ritme kampanye.",
+            "platform": f"Berdasarkan data keterlibatan per platform: {data_json}, identifikasi 3 wawasan untuk platform 'juara' dan 'peluang'.",
+            "mediaType": f"Berdasarkan data distribusi jenis media: {data_json}, berikan 3 wawasan tentang preferensi audiens berdasarkan format.",
+            "location": f"Berdasarkan data keterlibatan per lokasi: {data_json}, berikan 3 wawasan geo-strategis untuk identifikasi pasar."
         }
-        prompt_modifier = "Dari perspektif yang berbeda, atau fokus pada peluang tersembunyi/risiko yang diabaikan, berikan 3 wawasan alternatif/pelengkap. Hindari pengulangan ide dari wawasan umum." if version_type == "Versi 2" else ""
-        return f"Anda adalah seorang konsultan intelijen media profesional. {base_prompts.get(key, '')} {prompt_modifier}".strip()
+        prompt_modifier = " Dari perspektif yang berbeda, atau fokus pada peluang/risiko tersembunyi, berikan 3 wawasan alternatif." if version_type == "Versi 2" else ""
+        return f"Anda adalah konsultan intelijen media. {base_prompts.get(key, '')}{prompt_modifier} Format sebagai daftar bernomor."
 
     for chart in charts_to_display:
         with chart["col"]:
@@ -602,77 +572,78 @@ if st.session_state.data is not None:
             fig = None
             chart_data_for_prompt = None
 
+            # Logic to create fig and chart_data_for_prompt
             if chart["key"] == "sentiment":
                 sentiment_data = filtered_df['Sentiment'].value_counts().reset_index()
                 sentiment_data.columns = ['Sentiment', 'count']
                 if not sentiment_data.empty:
-                    fig = px.pie(sentiment_data, names='Sentiment', values='count', color_discrete_map={'Positive': '#a3be8c', 'Neutral': '#ebcb8b', 'Negative': '#bf616a'})
+                    fig = px.pie(sentiment_data, names='Sentiment', values='count', color_discrete_map={'Positive': '#2ea043', 'Neutral': '#8b949e', 'Negative': '#f85149'})
                 chart_data_for_prompt = sentiment_data.to_json()
-
             elif chart["key"] == "trend":
                 engagement_trend_chart = filtered_df.groupby(filtered_df['Date'].dt.date)['Engagements'].sum().reset_index()
                 engagement_trend_chart['Date'] = pd.to_datetime(engagement_trend_chart['Date'])
                 if not engagement_trend_chart.empty:
                     fig = px.line(engagement_trend_chart, x='Date', y='Engagements', labels={'Date': 'Tanggal', 'Engagements': 'Total Keterlibatan'})
-                    fig.update_traces(line=dict(color='#88c0d0', width=3))
+                    fig.update_traces(line=dict(color='#58a6ff', width=3))
                 chart_data_for_prompt = engagement_trend_chart.tail(10).to_json()
-                
             elif chart["key"] == "platform":
                 platform_data = filtered_df.groupby('Platform')['Engagements'].sum().sort_values(ascending=False).reset_index()
                 if not platform_data.empty:
-                    fig = px.bar(platform_data, x='Platform', y='Engagements', color='Platform', color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig = px.bar(platform_data, x='Platform', y='Engagements', color='Platform', color_discrete_sequence=px.colors.qualitative.Vivid)
                 chart_data_for_prompt = platform_data.to_json()
-
             elif chart["key"] == "mediaType":
                 media_type_data = filtered_df['Media Type'].value_counts().reset_index()
                 media_type_data.columns = ['Media Type', 'count']
                 if not media_type_data.empty:
-                    fig = px.pie(media_type_data, names='Media Type', values='count', hole=.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig = px.pie(media_type_data, names='Media Type', values='count', hole=.4, color_discrete_sequence=px.colors.qualitative.Pastel2)
                 chart_data_for_prompt = media_type_data.to_json()
-
             elif chart["key"] == "location": 
                 location_data = filtered_df.groupby('Location')['Engagements'].sum().nlargest(5).reset_index()
                 if not location_data.empty:
-                    fig = px.bar(location_data, y='Location', x='Engagements', orientation='h', color='Location', color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig = px.bar(location_data, y='Location', x='Engagements', orientation='h', color='Location', color_discrete_sequence=px.colors.qualitative.Prism)
                 chart_data_for_prompt = location_data.to_json()
             
             if fig:
                 st.session_state.chart_figures[chart["key"]] = fig 
-
-                fig.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font_color='#d8dee9',
-                    legend_title_text=''
-                )
+                fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#8b949e', legend_title_text='')
                 st.plotly_chart(fig, use_container_width=True)
-
-                if st.button(f"✨ Buat Wawasan AI ({chart['title']})", key=f"insight_btn_{chart['key']}"):
-                    with st.spinner(f"Menganalisis {chart['title']}..."):
-                        if chart_data_for_prompt:
-                            prompt_v1 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 1")
-                            insight_v1 = get_ai_insight(prompt_v1)
-                            prompt_v2 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 2")
-                            insight_v2 = get_ai_insight(prompt_v2)
-                            st.session_state.chart_insights[chart['key']] = {"Insight Versi 1": insight_v1, "Insight Versi 2": insight_v2}
-                        else:
-                            st.session_state.chart_insights[chart['key']] = {"Insight Versi 1": "Data tidak cukup.", "Insight Versi 2": "Data tidak cukup."}
-                
-                current_insights = st.session_state.chart_insights.get(chart['key'], {})
-                if current_insights:
-                    st.markdown("Pilih versi wawasan AI:", unsafe_allow_html=True)
-                    selected_insight_version = st.radio("Versi Wawasan:", ("Insight Versi 1", "Insight Versi 2"), key=f"insight_selector_{chart['key']}", label_visibility="collapsed")
-                    insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Buat Wawasan AI' untuk memulai.")
-                    st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
-
             else:
                 st.write("Tidak ada data yang tersedia untuk filter ini.")
                 st.session_state.chart_figures[chart["key"]] = None 
+
+            # Insight controls (Button, Radio, Box)
+            if st.button(f"✨ Generate AI Insight ({chart['title']})", key=f"insight_btn_{chart['key']}"):
+                with st.spinner(f"Menganalisis {chart['title']}..."):
+                    if chart_data_for_prompt:
+                        prompt_v1 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 1")
+                        insight_v1 = get_ai_insight(prompt_v1)
+                        prompt_v2 = get_chart_prompt(chart['key'], chart_data_for_prompt, "Versi 2")
+                        insight_v2 = get_ai_insight(prompt_v2)
+                        st.session_state.chart_insights[chart['key']] = {
+                            "gemini-2.0-flash": insight_v1, 
+                            "llama-3.3-8b-instruct": insight_v2
+                        }
+                    else:
+                        st.session_state.chart_insights[chart['key']] = {
+                            "gemini-2.0-flash": "Tidak ada data untuk dianalisis.", 
+                            "llama-3.3-8b-instruct": "Tidak ada data untuk dianalisis."
+                        }
             
+            current_insights = st.session_state.chart_insights.get(chart['key'], {})
+            if current_insights:
+                st.markdown("Pilih Model AI untuk ditampilkan:", unsafe_allow_html=True)
+                selected_insight_version = st.radio(
+                    "Pilih Model AI:",
+                    ("gemini-2.0-flash", "llama-3.3-8b-instruct"),
+                    key=f"insight_selector_{chart['key']}",
+                    label_visibility="collapsed"
+                )
+                insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Generate AI Insight' untuk memulai.")
+                st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
+
             st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Bagian Unduh Laporan ---
-    st.markdown("---")
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.markdown("<h3>📄 Unduh Laporan Analisis</h3>", unsafe_allow_html=True)
     st.write("Setelah semua analisis selesai, Anda dapat mengunduh laporan lengkap dalam format HTML.")
@@ -705,4 +676,3 @@ if st.session_state.data is not None:
             else:
                 st.error("Gagal membuat laporan. Pastikan data ada dan wawasan telah dibuat.")
     st.markdown('</div>', unsafe_allow_html=True)
-
