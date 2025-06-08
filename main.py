@@ -247,7 +247,7 @@ def run_consultant_chat(df_summary):
 load_css()
 api_configured = configure_gemini_api()
 
-st.markdown("<div class='main-header'><h1>Media Intelligence Dashboard</h1><p>Ryan Vandiaz Media Agency</p></div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'><h1>Media Intelligence Dashboard</h1><p>Nouval Media Consultant</p></div>", unsafe_allow_html=True)
 
 # Inisialisasi State
 for key in ['data', 'chart_insights', 'campaign_summary', 'post_idea', 'anomaly_insight', 'chart_figures', 'last_uploaded_file_name', 'last_uploaded_file_size', 'show_analysis', 'last_filter_state']:
@@ -273,7 +273,7 @@ if st.session_state.data is None:
 # Tampilan Dasbor Utama
 if st.session_state.data is not None:
     df = st.session_state.data
-    st.markdown(f"""<div class="uploaded-file-info"><h3>☁️ File Terunggah</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="uploaded-file-info"><h3>☁️ File Berhasil Terunggah! ✅️</h3><p><strong>Nama File:</strong> {st.session_state.last_uploaded_file_name}</p></div>""", unsafe_allow_html=True)
     
     # PERUBAHAN BARU: Menambahkan tombol chatbot di samping tombol reset
     col1, col2 = st.columns(2)
@@ -367,7 +367,7 @@ if st.session_state.data is not None:
                         key=f"sel_{chart['key']}"
                     )
 
-                    if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
+                    if st.button("✨ Generate Insight dengan AI", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
                             with st.spinner(f"Menganalisis {chart['title']} dengan gaya '{selected_style}'..."):
                                 prompt = get_chart_prompt(chart['key'], data_for_prompt, selected_style)
@@ -379,21 +379,21 @@ if st.session_state.data is not None:
                             st.rerun()
                     
                     chart_specific_insights = st.session_state.chart_insights.get(chart.get("key"), {})
-                    insight_text = chart_specific_insights.get(selected_style, "Pilih gaya jawaban dan klik tombol untuk menghasilkan wawasan.")
+                    insight_text = chart_specific_insights.get(selected_style, "Pilih model AI untuk menampilkan insight untukmu!.")
                     st.markdown(f'<div class="insight-box">{insight_text}</div>', unsafe_allow_html=True)
 
         # Wawasan Umum & Unduh
         with st.container(border=True):
-            st.markdown("<h3>🧠 Pusat Wawasan Umum</h3>", unsafe_allow_html=True)
+            st.markdown("<h3>🧠Insight Lanjutan </h3>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown("<h4>⚡ Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>📝 Ringkasan Strategi Kampanye Anda</h4>", unsafe_allow_html=True)
                 if st.button("Buat Ringkasan", use_container_width=True):
                     with st.spinner("Membuat ringkasan..."):
                         st.session_state.campaign_summary = get_ai_insight(f"Data: {filtered_df.describe().to_json()}. Buat ringkasan eksekutif dan 3 rekomendasi strategis.")
                 st.info(st.session_state.campaign_summary or "Klik untuk ringkasan strategis.")
             with c2:
-                st.markdown("<h4>💡 Generator Ide Konten</h4>", unsafe_allow_html=True)
+                st.markdown("<h4>💡 Buatkan Ide Konten</h4>", unsafe_allow_html=True)
                 if st.button("Buat Ide Postingan", use_container_width=True):
                     with st.spinner("Mencari ide..."):
                         best_platform = filtered_df.groupby('Platform')['Engagements'].sum().idxmax() if not filtered_df.empty else "N/A"
@@ -402,5 +402,5 @@ if st.session_state.data is not None:
         
         with st.container(border=True):
             st.markdown("<h3>📄 Unduh Laporan Analisis</h3>", unsafe_allow_html=True)
-            if st.download_button("Unduh Laporan HTML", data=generate_html_report(st.session_state.campaign_summary, st.session_state.post_idea, st.session_state.anomaly_insight, st.session_state.chart_insights, st.session_state.chart_figures, charts_to_display), file_name="Laporan_Media_Intelligence.html", mime="text/html", use_container_width=True):
+            if st.download_button("Unduh Laporan", data=generate_html_report(st.session_state.campaign_summary, st.session_state.post_idea, st.session_state.anomaly_insight, st.session_state.chart_insights, st.session_state.chart_figures, charts_to_display), file_name="Laporan_Media_Intelligence.html", mime="text/html", use_container_width=True):
                 st.success("Laporan berhasil dibuat!")
