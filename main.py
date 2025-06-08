@@ -74,7 +74,6 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
             chart_title = chart_info["title"]
             fig = chart_figures_dict.get(chart_key)
             
-            # PERUBAHAN 1: Logika dikembalikan untuk menangani beberapa gaya wawasan per grafik
             insights_for_chart = chart_insights.get(chart_key, {})
             insights_html = ""
             for style, text in insights_for_chart.items():
@@ -128,22 +127,61 @@ def generate_html_report(campaign_summary, post_idea, anomaly_insight, chart_ins
     """
     return html_content.encode('utf-8')
 
+# PERUBAHAN UTAMA HANYA DI FUNGSI INI
 def load_css():
-    """Menyuntikkan CSS kustom."""
+    """Menyuntikkan CSS kustom dengan gradien hijau."""
     st.markdown("""
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
-            body { background-color: #0f172a !important; }
-            .stApp { background-image: radial-gradient(at top left, #1e293b, #0f172a, black); color: #cbd5e1; }
+            body { background-color: #042f2e !important; } /* Basis hijau gelap */
+            .stApp { 
+                background-image: radial-gradient(at top left, #104e4a, #042f2e, black); /* Gradien radial hijau */
+                color: #e5e7eb; 
+            }
             .main-header { font-family: 'Orbitron', sans-serif; text-align: center; margin-bottom: 2rem; }
-            .main-header h1 { background: -webkit-linear-gradient(45deg, #06B6D4, #6366F1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.75rem; font-weight: 900; }
-            .main-header p { color: #94a3b8; font-size: 1.1rem; }
-            .chart-container, .insight-hub, .anomaly-card { border: 1px solid #475569; background-color: rgba(30, 41, 59, 0.6); backdrop-filter: blur(15px); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; box-sizing: border-box; }
-            .anomaly-card { border: 2px solid #f59e0b; background-color: rgba(245, 158, 11, 0.1); }
-            .insight-box { background-color: rgba(15, 23, 42, 0.7); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; min-height: 150px; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem; }
-            .chart-container h3, .insight-hub h3, .anomaly-card h3, .insight-hub h4 { color: #5eead4; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
-            .uploaded-file-info { background-color: rgba(30, 41, 59, 0.6); border: 1px solid #475569; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); color: #cbd5e1; }
-            .uploaded-file-info h3 { color: #5eead4; margin-top: 0; margin-bottom: 1rem; }
+            .main-header h1 { 
+                background: -webkit-linear-gradient(45deg, #6EE7B7, #10B981); /* Gradien teks hijau */
+                -webkit-background-clip: text; 
+                -webkit-text-fill-color: transparent; 
+                font-size: 2.75rem; 
+                font-weight: 900; 
+            }
+            .main-header p { color: #9ca3af; font-size: 1.1rem; }
+            .chart-container, .insight-hub, .anomaly-card, .uploaded-file-info { 
+                border: 1px solid #134E4A; /* Border hijau gelap */
+                background-color: rgba(16, 56, 48, 0.7); /* Latar belakang kontainer kehijauan */
+                backdrop-filter: blur(15px); 
+                border-radius: 1rem; 
+                padding: 1.5rem; 
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2); 
+                margin-bottom: 2rem; 
+                box-sizing: border-box; 
+            }
+            .anomaly-card { 
+                border: 2px solid #f59e0b; /* Tetap oranye untuk visibilitas anomali */
+                background-color: rgba(245, 158, 11, 0.1); 
+            }
+            .insight-box { 
+                background-color: rgba(4, 47, 46, 0.75); /* Kotak wawasan lebih gelap */
+                border: 1px solid #064E3B; /* Border hijau lebih gelap */
+                border-radius: 0.5rem; 
+                padding: 1rem; 
+                margin-top: 1rem; 
+                min-height: 150px; 
+                white-space: pre-wrap; 
+                word-wrap: break-word; 
+                font-size: 0.9rem; 
+            }
+            .chart-container h3, .insight-hub h3, .anomaly-card h3, .insight-hub h4, .uploaded-file-info h3 { 
+                color: #34D399; /* Warna aksen utama hijau emerald */
+                margin-top: 0; 
+                margin-bottom: 1rem; 
+                display: flex; 
+                align-items: center; 
+                gap: 0.5rem; 
+                font-weight: 600; 
+            }
+            .uploaded-file-info { color: #e5e7eb; }
             .uploaded-file-info p { margin-bottom: 0.5rem; }
         </style>
     """, unsafe_allow_html=True)
@@ -242,7 +280,6 @@ if st.session_state.data is not None:
         charts_to_display = [{"key": "sentiment", "title": "Analisis Sentimen"}, {"key": "trend", "title": "Tren Keterlibatan"}, {"key": "platform", "title": "Keterlibatan per Platform"}, {"key": "mediaType", "title": "Distribusi Jenis Media"}, {"key": "location", "title": "5 Lokasi Teratas"}]
         chart_cols = st.columns(2)
         
-        # PERUBAHAN 2: Fungsi prompt diubah untuk menerima gaya jawaban dan memiliki persona yang berbeda
         def get_chart_prompt(key, data_json, answer_style):
             prompts = {"sentiment": "distribusi sentimen", "trend": "tren keterlibatan", "platform": "keterlibatan per platform", "mediaType": "distribusi jenis media", "location": "keterlibatan per lokasi"}
             
@@ -252,7 +289,7 @@ if st.session_state.data is not None:
                 "Jawaban 3": "Anda adalah seorang pakar data yang sangat kuantitatif dan to-the-point. Berikan 3 kesimpulan actionable yang didukung langsung oleh angka-angka dalam data. Sebutkan angka spesifik jika memungkinkan."
             }
             
-            persona = personas.get(answer_style, "Anda adalah asisten AI. Berikan 3 wawasan dari data berikut.") # Persona default
+            persona = personas.get(answer_style, "Anda adalah asisten AI. Berikan 3 wawasan dari data berikut.")
             
             return f"{persona} Analisis data mengenai {prompts.get(key, 'data')}: {data_json}. Sajikan wawasan dalam format daftar bernomor yang jelas."
 
@@ -273,11 +310,10 @@ if st.session_state.data is not None:
                     
                     if fig:
                         st.session_state.chart_figures[chart["key"]] = fig
-                        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#cbd5e1', legend_title_text='')
+                        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e5e7eb', legend_title_text='')
                         st.plotly_chart(fig, use_container_width=True)
                     else: st.warning("Tidak ada data untuk ditampilkan dengan filter ini.")
                     
-                    # PERUBAHAN 3: Menambahkan dropdown dan memperbarui logika tombol serta penyimpanan wawasan
                     answer_styles = ["Jawaban 1", "Jawaban 2", "Jawaban 3"]
                     selected_style = st.selectbox(
                         "Pilih Gaya Jawaban AI:",
@@ -290,15 +326,12 @@ if st.session_state.data is not None:
                             with st.spinner(f"Menganalisis {chart['title']} dengan gaya '{selected_style}'..."):
                                 prompt = get_chart_prompt(chart['key'], data_for_prompt, selected_style)
                                 
-                                # Inisialisasi dictionary untuk chart jika belum ada
                                 if chart['key'] not in st.session_state.chart_insights:
                                     st.session_state.chart_insights[chart['key']] = {}
                                 
-                                # Simpan wawasan untuk gaya yang dipilih
                                 st.session_state.chart_insights[chart['key']][selected_style] = get_ai_insight(prompt)
                             st.rerun()
                     
-                    # Tampilkan wawasan berdasarkan gaya yang dipilih di dropdown
                     chart_specific_insights = st.session_state.chart_insights.get(chart.get("key"), {})
                     insight_text = chart_specific_insights.get(selected_style, "Pilih gaya jawaban dan klik tombol untuk menghasilkan wawasan.")
                     st.markdown(f'<div class="insight-box">{insight_text}</div>', unsafe_allow_html=True)
