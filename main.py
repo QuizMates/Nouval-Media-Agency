@@ -524,7 +524,7 @@ if st.session_state.data is not None:
 
             # Logika reset insight jika filter berubah
             # --- UX UPDATE: Menyesuaikan filter_state untuk list ---
-            filter_state = f"{''.join(platform)}{''.join(sentiment)}{''.join(media_type)}{''.join(location)}{start_date}{end_date}"
+            filter_state = f"{''.join(sorted(platform))}{''.join(sorted(sentiment))}{''.join(sorted(media_type))}{''.join(sorted(location))}{start_date}{end_date}"
             if 'last_filter_state' not in st.session_state or st.session_state.last_filter_state != filter_state:
                 st.session_state.chart_insights = {}
                 st.session_state.campaign_summary = ""
@@ -693,20 +693,17 @@ if st.session_state.data is not None:
                                     "llama-3.3-8b-instruct": "Tidak ada data yang cukup untuk menghasilkan wawasan."
                                 }
                     
-                    # Selector untuk versi wawasan
+                    # --- UX UPDATE: Mengganti radio dengan selectbox (dropdown) ---
                     current_insights = st.session_state.chart_insights.get(chart['key'], {})
-                    
-                    # Tambahkan teks info di atas tombol pilih versi
-                    st.markdown("Pilih Model Ai  AI untuk ditampilkan:", unsafe_allow_html=True)
-                    selected_insight_version = st.radio(
-                        "Pilih Model Ai :",
-                        ("gemini-2.0-flash", "llama-3.3-8b-instruct"),
+                    selected_insight_version = st.selectbox(
+                        "Pilih Model AI",
+                        options=["gemini-2.0-flash", "llama-3.3-8b-instruct"],
                         key=f"insight_selector_{chart['key']}"
                     )
                     
                     insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Buat Wawasan AI' untuk menghasilkan wawasan.")
-                    
                     st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
+
                 else:
                     st.write("Tidak ada data yang tersedia untuk grafik ini dengan filter yang dipilih.")
                     st.session_state.chart_figures[chart["key"]] = None 
@@ -717,15 +714,14 @@ if st.session_state.data is not None:
                             "llama-3.3-8b-instruct": "Tidak ada data yang cukup untuk menghasilkan wawasan."
                         }
                     
-                    # Selector untuk versi wawasan (bahkan jika tidak ada grafik)
-                    # Tambahkan teks info di atas tombol pilih versi
-                    st.markdown("Pilih Model Ai  AI untuk ditampilkan:", unsafe_allow_html=True)
+                    # --- UX UPDATE: Mengganti radio dengan selectbox (dropdown) ---
                     current_insights = st.session_state.chart_insights.get(chart['key'], {})
-                    selected_insight_version = st.radio(
-                        "Pilih Model Ai :",
-                        ("gemini-2.0-flash", "llama-3.3-8b-instruct"),
+                    selected_insight_version = st.selectbox(
+                        "Pilih Model AI",
+                        options=["gemini-2.0-flash", "llama-3.3-8b-instruct"],
                         key=f"insight_selector_{chart['key']}_no_chart"
                     )
+                    
                     insight_text_to_display = current_insights.get(selected_insight_version, "Klik 'Buat Wawasan AI' untuk menghasilkan wawasan.")
                     st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
                 
