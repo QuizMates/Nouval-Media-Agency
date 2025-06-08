@@ -520,66 +520,6 @@ if st.session_state.data is not None:
     if location != "All":
         filtered_df = filtered_df[filtered_df['Location'] == location]
 
-    # --- Pusat Wawasan AI ---
-    st.markdown('<div class="insight-hub">', unsafe_allow_html=True)
-    st.markdown("<h3>🧠 Pusat Wawasan AI</h3>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("<h4>⚡ Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
-        if st.button("Buat Ringkasan", key="summary_btn", use_container_width=True):
-            with st.spinner("Membuat ringkasan strategi..."):
-                prompt = f"""
-                Anda adalah seorang konsultan strategi media senior. Analisis data kampanye berikut secara komprehensif. Berikan ringkasan eksekutif (3-4 kalimat) diikuti oleh 3 rekomendasi strategis utama yang paling berdampak. 
-                Gunakan data berikut:
-                - Data yang difilter (5 baris pertama): {filtered_df.head().to_json()}
-                - Jumlah total sebutan: {len(filtered_df)}
-                - Rata-rata keterlibatan: {filtered_df['Engagements'].mean():.2f}
-                - Distribusi Sentimen: {filtered_df['Sentiment'].value_counts().to_json()}
-                - Keterlibatan per Platform: {filtered_df.groupby('Platform')['Engagements'].sum().to_json()}
-                Fokus pada gambaran besar: Apa cerita utama yang disampaikan oleh data ini? Di mana peluang terbesar dan apa risiko utamanya? Format jawaban Anda dengan jelas.
-                """
-                summary = get_ai_insight(prompt)
-                st.session_state.campaign_summary = summary
-                
-        st.markdown(f'<div class="insight-box">{st.session_state.campaign_summary or "Klik untuk membuat ringkasan strategis dari semua data."}</div>', unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("<h4>💡 Generator Ide Konten AI</h4>", unsafe_allow_html=True)
-        if st.button("✨ Buat Ide Postingan", key="idea_btn", use_container_width=True):
-            with st.spinner("Mencari ide terbaik..."):
-                if not filtered_df.empty:
-                    best_platform_series = filtered_df.groupby('Platform')['Engagements'].sum()
-                    if not best_platform_series.empty:
-                        best_platform = best_platform_series.idxmax()
-                        top_posts = filtered_df[filtered_df['Platform'] == best_platform].nlargest(5, 'Engagements')
-                        top_headlines = ', '.join(top_posts['Headline'].tolist())
-                    else:
-                        best_platform = "tidak diketahui"
-                        top_headlines = "tidak ada data"
-                else:
-                    best_platform = "tidak diketahui"
-                    top_headlines = "tidak ada data"
-
-
-                prompt = f"""
-                Anda adalah seorang ahli strategi media sosial yang kreatif. Berdasarkan data berikut, buatlah satu contoh postingan untuk platform **{best_platform}**.
-                - Platform Berkinerja Terbaik: {best_platform}
-                - Topik Berkinerja Tinggi (dari judul): {top_headlines}
-                Postingan harus:
-                1. Ditulis dalam Bahasa Indonesia.
-                2. Memiliki nada yang menarik dan sesuai untuk {best_platform}.
-                3. Memberikan saran konsep visual yang jelas.
-                4. Menyertakan 3-5 tagar yang relevan.
-                Format output dengan jelas: "Platform:", "Konten Postingan:", "Saran Visual:", dan "Tagar:".
-                """
-                idea = get_ai_insight(prompt)
-                st.session_state.post_idea = idea
-                
-        st.markdown(f'<div class="insight-box">{st.session_state.post_idea or "Klik untuk menghasilkan ide postingan berdasarkan data kinerja terbaik Anda."}</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # --- Deteksi Anomali ---
     engagement_trend = filtered_df.groupby(filtered_df['Date'].dt.date)['Engagements'].sum().reset_index()
     if len(engagement_trend) > 7:
@@ -762,6 +702,66 @@ if st.session_state.data is not None:
                 st.markdown(f'<div class="insight-box">{insight_text_to_display}</div>', unsafe_allow_html=True)
             
             st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- [MOVED HERE] Pusat Wawasan AI ---
+    st.markdown('<div class="insight-hub">', unsafe_allow_html=True)
+    st.markdown("<h3>🧠 Pusat Wawasan AI</h3>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("<h4>⚡ Ringkasan Strategi Kampanye</h4>", unsafe_allow_html=True)
+        if st.button("Buat Ringkasan", key="summary_btn", use_container_width=True):
+            with st.spinner("Membuat ringkasan strategi..."):
+                prompt = f"""
+                Anda adalah seorang konsultan strategi media senior. Analisis data kampanye berikut secara komprehensif. Berikan ringkasan eksekutif (3-4 kalimat) diikuti oleh 3 rekomendasi strategis utama yang paling berdampak. 
+                Gunakan data berikut:
+                - Data yang difilter (5 baris pertama): {filtered_df.head().to_json()}
+                - Jumlah total sebutan: {len(filtered_df)}
+                - Rata-rata keterlibatan: {filtered_df['Engagements'].mean():.2f}
+                - Distribusi Sentimen: {filtered_df['Sentiment'].value_counts().to_json()}
+                - Keterlibatan per Platform: {filtered_df.groupby('Platform')['Engagements'].sum().to_json()}
+                Fokus pada gambaran besar: Apa cerita utama yang disampaikan oleh data ini? Di mana peluang terbesar dan apa risiko utamanya? Format jawaban Anda dengan jelas.
+                """
+                summary = get_ai_insight(prompt)
+                st.session_state.campaign_summary = summary
+                
+        st.markdown(f'<div class="insight-box">{st.session_state.campaign_summary or "Klik untuk membuat ringkasan strategis dari semua data."}</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("<h4>💡 Generator Ide Konten AI</h4>", unsafe_allow_html=True)
+        if st.button("✨ Buat Ide Postingan", key="idea_btn", use_container_width=True):
+            with st.spinner("Mencari ide terbaik..."):
+                if not filtered_df.empty:
+                    best_platform_series = filtered_df.groupby('Platform')['Engagements'].sum()
+                    if not best_platform_series.empty:
+                        best_platform = best_platform_series.idxmax()
+                        top_posts = filtered_df[filtered_df['Platform'] == best_platform].nlargest(5, 'Engagements')
+                        top_headlines = ', '.join(top_posts['Headline'].tolist())
+                    else:
+                        best_platform = "tidak diketahui"
+                        top_headlines = "tidak ada data"
+                else:
+                    best_platform = "tidak diketahui"
+                    top_headlines = "tidak ada data"
+
+
+                prompt = f"""
+                Anda adalah seorang ahli strategi media sosial yang kreatif. Berdasarkan data berikut, buatlah satu contoh postingan untuk platform **{best_platform}**.
+                - Platform Berkinerja Terbaik: {best_platform}
+                - Topik Berkinerja Tinggi (dari judul): {top_headlines}
+                Postingan harus:
+                1. Ditulis dalam Bahasa Indonesia.
+                2. Memiliki nada yang menarik dan sesuai untuk {best_platform}.
+                3. Memberikan saran konsep visual yang jelas.
+                4. Menyertakan 3-5 tagar yang relevan.
+                Format output dengan jelas: "Platform:", "Konten Postingan:", "Saran Visual:", dan "Tagar:".
+                """
+                idea = get_ai_insight(prompt)
+                st.session_state.post_idea = idea
+                
+        st.markdown(f'<div class="insight-box">{st.session_state.post_idea or "Klik untuk menghasilkan ide postingan berdasarkan data kinerja terbaik Anda."}</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Bagian Unduh Laporan HTML ---
     st.markdown("---")
