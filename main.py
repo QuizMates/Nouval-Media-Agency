@@ -272,7 +272,7 @@ if st.session_state.data is not None:
                     selected_model = st.selectbox("Pilih Model AI", ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"], key=f"sel_{chart['key']}")
                     if st.button("✨ Generate AI Insight", key=f"btn_{chart['key']}"):
                         if data_for_prompt:
-                            with st.spinner(f"Menganalisis {chart['title']} dengan 3 model AI..."):
+                            with st.spinner(f"Menganalisis {chart['title']} dengan AI..."):
                                 st.session_state.chart_insights[chart['key']] = {model: get_ai_insight(get_chart_prompt(chart['key'], data_for_prompt, model), model) for model in ["gemini-1.5-flash", "llama-3.3-8b-instruct", "gemini-1.5-pro-latest"]}
                             st.rerun()
                     
